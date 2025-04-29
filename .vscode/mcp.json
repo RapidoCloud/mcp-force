@@ -1,0 +1,9 @@
+{
+  "servers": {
+    "mcp-force": {
+      "command": "${workspaceFolder}/scripts/run.sh",
+      "args": ["--debug"],
+      "envFile": "${workspaceFolder}/.env"
+    }
+  }
+}
