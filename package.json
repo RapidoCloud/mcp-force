@@ -1,0 +1,25 @@
+{
+  "name": "mcp-force",
+  "version": "1.0.0",
+  "description": "A simple MCP server with packaged tools, for each Salesforce API (REST, Tooling, GraphQL, etc.)",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "list-tools": "node src/index.js tools",
+    "start": "node src/index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.9.0",
+    "@rapidocloud/mcp-tools": "^0.1.5",
+    "commander": "^13.1.0",
+    "dotenv": "^16.4.7",
+    "express": "^5.1.0"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "author": "Rupert Barrow",
+  "original_author": "Postman, Inc.",
+  "license": "MIT",
+  "packageManager": "yarn@4.5.3+sha512.3003a14012e2987072d244c720506549c1aab73ee728208f1b2580a9fd67b92d61ba6b08fe93f6dce68fd771e3af1e59a0afa28dd242dd0940d73b95fedd4e90"
+}

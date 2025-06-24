@@ -1,8 +1,7 @@
 {
   "servers": {
-    "mcp-force": {
-      "command": "${workspaceFolder}/scripts/run.sh",
-      "args": ["--debug"],
+    "mcpforce-in-vscode": {
+      "command": "${workspaceFolder}/src/mcpServer.js",
       "envFile": "${workspaceFolder}/.env"
     }
   }
