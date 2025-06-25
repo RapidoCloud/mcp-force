@@ -1,3 +1,10 @@
+# [1.0.0-dev.4](https://github.com/RapidoCloud/mcp-force/compare/v1.0.0-dev.3...v1.0.0-dev.4) (2025-06-25)
+
+
+### Features
+
+* added REST APIs for Search, Logs, Actions, OpenAPISchema ([46d4a35](https://github.com/RapidoCloud/mcp-force/commit/46d4a359e64b661a80e08f48b1f046020ebe2917))
+
 # [1.0.0-dev.3](https://github.com/RapidoCloud/mcp-force/compare/v1.0.0-dev.2...v1.0.0-dev.3) (2025-06-25)
 
 
