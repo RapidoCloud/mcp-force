@@ -78,7 +78,7 @@ jobs:
           echo "GITHUB" >> $GITHUB_STEP_SUMMARY
           echo "------" >> $GITHUB_STEP_SUMMARY
 
-          GITHUB_URL="https://github.com/RupertBarrow/colleurs-app/releases/tag/$(cat VERSION)"
+          GITHUB_URL="https://github.com/RapidoCloud/mcp-force/releases/tag/$(cat VERSION | sed 's/^v//')"
           echo "Github release ${version} : $GITHUB_URL"
           echo "Github release ${version} : $GITHUB_URL" >> $GITHUB_STEP_SUMMARY
 
