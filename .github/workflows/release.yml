@@ -6,8 +6,7 @@ on:
     branches: [next, main, citests, alpha, alpha-*, beta, beta-*, release, release-*]
 
 env:
-  ANDROID_APPALIAS: leou
-  APPID: org.rapido.leou
+  NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
 jobs:
   ####################################################################################

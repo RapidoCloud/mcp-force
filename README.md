@@ -47,7 +47,7 @@ Create or update `.vscode/mcp.json` to configure the MCP server:
   "servers": {
     "mcp-force": {
       "command": "npx",
-      "args": ["@rapidocloud/mcp-force"],
+      "args": ["-y", "@rapidocloud/mcp-force"],
       "env": {
         "SALESFORCE_ENDPOINT": "https://mydomain-dev-ed.developer.my.salesforce.com",
         "SALESFORCE_ACCESS_TOKEN": "<your_access_token_here>",
@@ -71,7 +71,7 @@ Add the MCP server to your Claude Desktop configuration file:
   "mcpServers": {
     "mcp-force": {
       "command": "npx",
-      "args": ["@rapidocloud/mcp-force"],
+      "args": ["-y", "@rapidocloud/mcp-force"],
       "env": {
         "SALESFORCE_ENDPOINT": "https://mydomain-dev-ed.developer.my.salesforce.com",
         "SALESFORCE_ACCESS_TOKEN": "<your_access_token_here>",

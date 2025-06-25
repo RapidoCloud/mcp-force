@@ -9,7 +9,6 @@ on:
 env:
   MAIN_BRANCH: main
   FEATURE_BRANCH_PREFIX: 'origin/feature/'
-  NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
 permissions:
   contents: write # so it can comment
