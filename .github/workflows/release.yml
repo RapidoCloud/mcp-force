@@ -82,6 +82,14 @@ jobs:
           echo "Github release ${version} : $GITHUB_URL"
           echo "Github release ${version} : $GITHUB_URL" >> $GITHUB_STEP_SUMMARY
 
+          echo " " >> $GITHUB_STEP_SUMMARY
+          echo "NPM" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+
+          NPM_URL="https://www.npmjs.com/package/@rapidocloud/mcp-force/v/$(cat VERSION | sed 's/^v//')"
+          echo "NPM module ${version} : $NPM_URL"
+          echo "NPM module ${version} : $NPM_URL" >> $GITHUB_STEP_SUMMARY
+
       - id: show-error
         if: steps.semantic-release.outputs.exit_code != '0'
         name: Show Error
