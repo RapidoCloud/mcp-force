@@ -32,6 +32,7 @@
     "build:dev": "     webpack --config webpack.config.cjs --mode=development",
     "watch": "         webpack --config webpack.config.cjs --mode=development --watch",
     "test": "          npm run list-tools",
+    "test:prod": "     npx -y @rapidocloud/mcp-force",
     "clean": "         rm -rf dist/",
     "prebuild": "      npm run clean",
     "prepublishOnly": "npm run build",
