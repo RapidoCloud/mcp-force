@@ -1,0 +1,129 @@
+name: Backport
+
+on:
+  workflow_dispatch:
+  pull_request_target:
+    types: [closed]
+    branches: ['main']
+
+env:
+  MAIN_BRANCH: main
+  FEATURE_BRANCH_PREFIX: 'origin/feature/'
+  NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+permissions:
+  contents: write # so it can comment
+  pull-requests: write # so it can create pull requests
+
+jobs:
+  #---------------------------------------------------
+  list_branches:
+    name: Get target branches
+    runs-on: ubuntu-latest
+    outputs:
+      branches: ${{ steps.branches.outputs.BRANCHES }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Fetch all branches
+          fetch-depth: 0
+
+      - name: List feature branches
+        id: feature_branches
+        # list all branches, filtering for prefix, and cutting off remotes/origin/
+        # then finally substitute newlines for spaces, excluding from the list the source branch which triggered the action
+        run: |
+          set -x
+          branches=$(git branch --list --all | grep "$FEATURE_BRANCH_PREFIX" | cut -c 18- | while read -r line
+          do
+            # in case of commit : if found branch is not the one we are committing on (GITHUB_REF_NAME)
+            # in case of pull request : if found branch is not the one we are pulling from (GITHUB_HEAD_REF)
+            if [ "$line" != "$GITHUB_REF_NAME" ] && [ "$line" != "$GITHUB_HEAD_REF" ]
+            then
+              echo \"$line\"","
+            fi
+          done
+          )
+          space_delimited=${branches//$'\n'/ }
+          echo "FEATURE_BRANCHES=[ ${space_delimited} ]" >> $GITHUB_OUTPUT
+          echo "FEATURE_BRANCHES=[ ${space_delimited} ]"
+
+      - name: Select branches according to input branch
+        id: branches
+        shell: bash
+        run: |
+          case "$GITHUB_REF_NAME" in
+            #"readonly-prod")
+            #  branches='[ "rbw-main-for-117" ]'
+            #  ;;
+            #"$MAIN_BRANCH")
+            #  branches='[ "'$UAT_BRANCH'" ]'
+            #  ;;
+            #"$UAT_BRANCH")
+            #  branches='[ "'$INTEG_BRANCH'" ]'
+            #  ;;
+            #"$INTEG_BRANCH")
+            #  branches='${{ steps.feature_branches.outputs.FEATURE_BRANCHES }}'
+            #  ;;
+            "$MAIN_BRANCH")
+              branches='${{ steps.feature_branches.outputs.FEATURE_BRANCHES }}'
+              ;;
+          esac
+          echo "BRANCHES=${branches}" >> $GITHUB_OUTPUT
+          echo "BRANCHES=${branches}"
+
+  #---------------------------------------------------
+  # my_echo:
+  #   runs-on: ubuntu-latest
+  #   needs:
+  #     - list_branches
+  #   steps:
+  #     - name: Target branch(es)
+  #       run: |
+  #         echo "${{ needs.list_branches.outputs.branches }}"
+  #         echo "#${{ fromJSON(needs.list_branches.outputs.branches) }}#"
+
+  #---------------------------------------------------
+  # see https://thekevinwang.com/2021/09/19/github-actions-dynamic-matrix/
+  backport:
+    if: ${{ needs.list_branches.outputs.branches != '[  ]' }}
+    name: Backport ${{ github.ref_name }} to ${{ matrix.branch }}
+    runs-on: ubuntu-latest
+    needs:
+      - list_branches
+      #- my_echo
+    strategy:
+      # If one job fails, the whole job fails
+      fail-fast: false
+      matrix:
+        branch: ${{ fromJSON(needs.list_branches.outputs.branches) }}
+    steps:
+      - run: echo ${{ matrix.branch }}
+      - uses: actions/checkout@v4
+        with:
+          # Fetch all branches
+          fetch-depth: 0
+
+      - name: Backport from source to target branch(es)
+        id: pr
+        uses: rupertbarrow/cm-backport-pr@main
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          pr-from-branch: ${{ github.repository_owner }}:${{ github.ref_name }}
+          pr-to-branch: ${{ matrix.branch }}
+          pr-title: Backport to branch ${{ matrix.branch }} (from ${{ github.ref_name }})
+          #pr-body: "The PR body."
+          pr-fail-if-exists: false
+          pr-update-if-exists: true
+          maintainer-can-modify: true
+          draft: false
+          merge-pr-after-created: false
+          #merge-commit-title: "Merge commit title"
+          #merge-commit-body: "Merge commit message."
+          #merge-method: squash
+
+      - name: Pull ${{ steps.pr.outputs.pr-number }} created/updated ${{ steps.pr.outputs.pr-url }}
+        run: |
+          echo "PR Number: ${{ steps.pr.outputs.pr-number }}"
+          echo "PR URL: ${{ steps.pr.outputs.pr-url }}"
+          echo "PR SHA: ${{ steps.pr.outputs.pr-sha }}"

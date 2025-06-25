@@ -1,0 +1,97 @@
+name: Release
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [next, main, citests, alpha, alpha-*, beta, beta-*, release, release-*]
+
+env:
+  ANDROID_APPALIAS: leou
+  APPID: org.rapido.leou
+
+jobs:
+  ####################################################################################
+  # BUILD ON ALL BRANCHES, and push bundle to CapGo
+  ####################################################################################
+
+  build:
+    runs-on: ubuntu-latest
+    permissions: write-all # Give the default GITHUB_TOKEN write permission to commit and push the added or changed files to the repository.
+    outputs:
+      version: ${{                  steps.semantic-release.outputs.version                  }}
+      exit_code: ${{                steps.semantic-release.outputs.exit_code                }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: |
+          npm install
+
+      - name: Build and test
+        run: |
+          npm run build
+          npm run test
+
+      - id: semantic-release
+        name: Semantic Release
+        run: |
+          # Redirect stdout to /dev/null and capture only stderr
+          # Semantic release also produces a file named VERSION containing the new version number
+          ERROR_FILE="/tmp/error_${{ github.run_id }}.txt"
+          #npx semantic-release 2>$ERROR_FILE
+
+          npm run semantic-release
+
+          # Save exit code to test for errors
+          exit_code=$?
+          echo "exit_code=$exit_code" >> $GITHUB_OUTPUT
+
+          # Save error messages to display in the summary if an error occurred
+          #cat $ERROR_FILE
+
+          # Save the version number
+          version=$(cat VERSION)
+          echo "version=$version" >> $GITHUB_OUTPUT
+        env:
+          DEBUG: true
+          GITHUB_TOKEN: ${{ github.token }}
+
+      - name: Commit VERSION file
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: 'chore: update VERSION file for release ${{steps.semantic-release.outputs.version}}'
+          file_pattern: 'VERSION'
+          disable_globbing: true
+
+      - id: show-results
+        if: steps.semantic-release.outputs.exit_code == '0'
+        name: Show Results
+        run: |
+          version=${{steps.semantic-release.outputs.version}}
+          echo "Semantic-release version : ${version}"
+          echo "Semantic-release version : ${version}" >> $GITHUB_STEP_SUMMARY
+
+          echo " " >> $GITHUB_STEP_SUMMARY
+          echo "GITHUB" >> $GITHUB_STEP_SUMMARY
+          echo "------" >> $GITHUB_STEP_SUMMARY
+
+          GITHUB_URL="https://github.com/RupertBarrow/colleurs-app/releases/tag/$(cat VERSION)"
+          echo "Github release ${version} : $GITHUB_URL"
+          echo "Github release ${version} : $GITHUB_URL" >> $GITHUB_STEP_SUMMARY
+
+      - id: show-error
+        if: steps.semantic-release.outputs.exit_code != '0'
+        name: Show Error
+        run: |
+          #echo "Error: Semantic release failed" >> $GITHUB_STEP_SUMMARY
+          #echo "Exit code: ${{ steps.semantic-release.outputs.exit_code }}" >> $GITHUB_STEP_SUMMARY
+          #echo "Error message:" >> $GITHUB_STEP_SUMMARY
+          #echo "${{ steps.semantic-release.outputs.error_output }}" >> $GITHUB_STEP_SUMMARY
+
+          #ERROR_FILE="/tmp/error_${{ github.run_id }}.txt"
+          #cat $ERROR_FILE >> $GITHUB_STEP_SUMMARY
+          pwd

@@ -1,8 +1,1 @@
-{
-  "servers": {
-    "mcpforce-in-vscode": {
-      "command": "${workspaceFolder}/src/mcpServer.js",
-      "envFile": "${workspaceFolder}/.env"
-    }
-  }
-}
+{}
