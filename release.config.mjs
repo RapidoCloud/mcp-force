@@ -32,7 +32,7 @@ export default {
   ci: true,
   debug: true,
   dryRun: false,
-  repositoryUrl: 'https://github.com/RapidoCloud/mcp-tools',
+  repositoryUrl: 'https://github.com/RapidoCloud/mcp-force',
 
   // prettier-ignore
   verifyConditions: [
