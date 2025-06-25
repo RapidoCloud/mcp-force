@@ -2,10 +2,10 @@
   "servers": {
     "mcpforce-in-vscode": {
       "command": "npx",
-      "args": ["-y", "@rapidocloud/mcp-force"],
+      "args": ["-y", "@rapidocloud/mcp-force@1.0.0-dev.4", "--package", "@rapidocloud/mcp-tools@1.0.0-dev.8"],
       "env": {
         "SALESFORCE_ENDPOINT": "https://rbarrow-dev-ed.my.salesforce.com",
-        "SALESFORCE_ACCESS_TOKEN": "00D1i000000ULGK!ARMAQDuuQLCJxoZdsSKzQ22eBJME3bcnf8DmO1m86_pgmk1CNiP.hbRAUMdnZD5b9MEz778MZAcwMuFypKpKoJBY8RSApN2H",
+        "SALESFORCE_ACCESS_TOKEN": "00D1i000000ULGK!ARMAQASwYw80Xu_YRiPEbYL.LM8ba_AVTBBBROmUzz.2DKsqS6lFhpeBH4LKbBnG7yIjLJTu7oIhEhfigdV5_EKFRD9lH53U",
         "PORT": "3021"
       }
     }

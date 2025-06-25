@@ -1,6 +1,6 @@
 {
   "name": "@rapidocloud/mcp-force",
-  "version": "1.0.0-dev.3",
+  "version": "0.0.1",
   "description": "A simple MCP server with packaged tools, for each Salesforce API (REST, Tooling, GraphQL, etc.)",
   "author": "Rupert Barrow",
   "original_author": "Postman, Inc.",
@@ -60,7 +60,7 @@
     "webpack-cli": "^5.1.0"
   },
   "peerDependencies": {
-    "@rapidocloud/mcp-tools": "^1.0.0-dev.6"
+    "@rapidocloud/mcp-tools": "^1.0.0-dev.8"
   },
   "engines": {
     "node": ">=22.0.0"
