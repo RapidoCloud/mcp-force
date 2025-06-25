@@ -1,25 +1,75 @@
 {
-  "name": "mcp-force",
-  "version": "1.0.0",
+  "name": "@rapidocloud/mcp-force",
+  "version": "1.0.0-dev.2",
   "description": "A simple MCP server with packaged tools, for each Salesforce API (REST, Tooling, GraphQL, etc.)",
-  "main": "src/index.js",
+  "author": "Rupert Barrow",
+  "original_author": "Postman, Inc.",
+  "license": "MIT",
   "type": "module",
-  "scripts": {
-    "list-tools": "node src/index.js tools",
-    "start": "node src/index.js"
+  "main": "dist/mcpServer.js",
+  "bin": {
+    "mcp-force": "./dist/mcpServer.js"
   },
+  "exports": {
+    ".": {
+      "import": "./dist/mcpServer.js",
+      "require": "./dist/mcpServer.js",
+      "types": "./dist/mcpServer.d.ts"
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist/",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "list-tools": "    node src/listTools.js tools",
+    "dev": "           node src/mcpServer.js",
+    "build": "         webpack --config webpack.config.cjs --mode=production",
+    "build:dev": "     webpack --config webpack.config.cjs --mode=development",
+    "watch": "         webpack --config webpack.config.cjs --mode=development --watch",
+    "test": "          npm run list-tools",
+    "test:dist": "     node dist/listTools.js tools",
+    "test:prod": "     npx -y @rapidocloud/mcp-force",
+    "clean": "         rm -rf dist/",
+    "prebuild": "      npm run clean",
+    "prepublishOnly": "npm run test:dist",
+    "version": "       npm run build && git add .",
+    "postversion": "   git push && git push --tags",
+    "semantic-release": "npx  -p semantic-release@24.2.5  -p @semantic-release/changelog@6.0.3  -p @semantic-release/commit-analyzer@13.0.1   -p @semantic-release/exec@7.0.3   -p @semantic-release/git@10.0.1  -p @semantic-release/github@11.0.3  -p @semantic-release/npm@12.0.1  -p @semantic-release/release-notes-generator@14.0.1  semantic-release"
+  },
+  "keywords": [
+    "mcp",
+    "salesforce",
+    "api"
+  ],
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.9.0",
-    "@rapidocloud/mcp-tools": "^0.1.5",
+    "@rapidocloud/mcp-tools": "^1.0.0-alpha.1",
     "commander": "^13.1.0",
     "dotenv": "^16.4.7",
     "express": "^5.1.0"
   },
+  "devDependencies": {
+    "@babel/core": "^7.22.0",
+    "@babel/preset-env": "^7.22.0",
+    "babel-loader": "^9.1.0",
+    "webpack": "^5.88.0",
+    "webpack-cli": "^5.1.0"
+  },
   "engines": {
     "node": ">=22.0.0"
   },
-  "author": "Rupert Barrow",
-  "original_author": "Postman, Inc.",
-  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RapidoCloud/mcp-force.git"
+  },
+  "bugs": {
+    "url": "https://github.com/RapidoCloud/mcp-force/issues"
+  },
+  "homepage": "https://github.com/RapidoCloud/mcp-force#readme",
   "packageManager": "yarn@4.5.3+sha512.3003a14012e2987072d244c720506549c1aab73ee728208f1b2580a9fd67b92d61ba6b08fe93f6dce68fd771e3af1e59a0afa28dd242dd0940d73b95fedd4e90"
 }
