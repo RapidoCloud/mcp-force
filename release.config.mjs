@@ -32,7 +32,7 @@ export default {
   ci: true,
   debug: true,
   dryRun: false,
-  repositoryUrl: 'https://github.com/Rapido-TM/mcp-tools',
+  repositoryUrl: 'https://github.com/RapidoCloud/mcp-tools',
 
   // prettier-ignore
   verifyConditions: [
@@ -74,13 +74,20 @@ export default {
     // Commit these files to Git(hub) after they have been updated by semantic-release
     [
       "@semantic-release/git", {
-        assets: ["package.json", "package-lock.json", "CHANGELOG.md", "ios/App/App.xcodeproj/project.pbxproj"],
+        assets: ["package.json", "CHANGELOG.md", "VERSION"],
         message: "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}",
       },
     ],
 
     // Add the CHANGELOG.md file as an attachment to the Github release
     ["@semantic-release/github", { assets: ["CHANGELOG.md"] }],
+
+    [
+      "@semantic-release/exec", {
+        // Publish the released version on the Github Action workflow output
+        successCmd: "echo v${nextRelease.version} > VERSION"
+      },
+    ],
 
   ],
 };
