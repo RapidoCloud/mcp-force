@@ -1,3 +1,10 @@
+# [1.0.0-dev.2](https://github.com/RapidoCloud/mcp-force/compare/v1.0.0-dev.1...v1.0.0-dev.2) (2025-06-25)
+
+
+### Bug Fixes
+
+* publishing releases to NPMjs.org ([981806d](https://github.com/RapidoCloud/mcp-force/commit/981806d6a2601c396079b73af0845a86502c2853))
+
 # 1.0.0-dev.1 (2025-06-25)
 
 
