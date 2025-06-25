@@ -25,7 +25,7 @@ Finally, user authentication is manual, for the time being : set an OAuth2 acces
 
 ### 1. Environment Configuration
 
-Create a `.env` file in the project root with your Salesforce credentials:
+Create a `.env` file in your project directory with your Salesforce credentials:
 
 ```env
 SALESFORCE_ENDPOINT='https://mydomain-dev-ed.developer.my.salesforce.com'
@@ -34,22 +34,24 @@ SALESFORCE_ENDPOINT='https://mydomain-dev-ed.developer.my.salesforce.com'
 # sf org login web --instance-url ${SALESFORCE_ENDPOINT} --json
 SALESFORCE_ACCESS_TOKEN='<your_access_token_here>'
 
-# Set your port : 3001 by defaukt
+# Set your port : 3001 by default
 PORT=3021
 ```
 
 ### 2. VS Code Configuration
 
-Create or update `.vscode/mcp.json` to configure the MCP server to use it in VS Code:
+Create or update `.vscode/mcp.json` to configure the MCP server:
 
 ```json
 {
-  "mcpServers": {
+  "servers": {
     "mcp-force": {
-      "command": "src/mcpServer.js",
+      "command": "npx",
+      "args": ["-y", "@rapidocloud/mcp-force"],
       "env": {
         "SALESFORCE_ENDPOINT": "https://mydomain-dev-ed.developer.my.salesforce.com",
-        "SALESFORCE_ACCESS_TOKEN": "<your_access_token_here>"
+        "SALESFORCE_ACCESS_TOKEN": "<your_access_token_here>",
+        "PORT": "3021"
       }
     }
   }
@@ -58,7 +60,7 @@ Create or update `.vscode/mcp.json` to configure the MCP server to use it in VS 
 
 ### 3. Claude Desktop Configuration
 
-Add the MCP server to your Claude Desktop configuration file to use it there:
+Add the MCP server to your Claude Desktop configuration file:
 
 **macOS:** `~/Library/Application Support/Claude/claude_desktop_config.json`
 
@@ -68,10 +70,12 @@ Add the MCP server to your Claude Desktop configuration file to use it there:
 {
   "mcpServers": {
     "mcp-force": {
-      "command": "/Users/<username>/.../mcp-force/src/mcpServer.js",
+      "command": "npx",
+      "args": ["-y", "@rapidocloud/mcp-force"],
       "env": {
         "SALESFORCE_ENDPOINT": "https://mydomain-dev-ed.developer.my.salesforce.com",
-        "SALESFORCE_ACCESS_TOKEN": "<your_access_token_here>"
+        "SALESFORCE_ACCESS_TOKEN": "<your_access_token_here>",
+        "PORT": "3021"
       }
     }
   }
@@ -80,14 +84,13 @@ Add the MCP server to your Claude Desktop configuration file to use it there:
 
 ## Installation
 
-1. Clone the repository
-2. List tools :
+No installation required! The MCP server will be automatically downloaded and run using npx when configured in your MCP client.
 
-```
-npm run list-tools
-```
+For development or testing, you can also run it directly:
 
-2. Set up your `.env` file and MCP configurations as described above
+```bash
+npx @rapidocloud/mcp-force
+```
 
 ## Usage Examples
 
@@ -153,10 +156,11 @@ The MCP server provides access to various Salesforce operations through the `@ra
 
 ## Troubleshooting
 
-- Ensure your Salesforce credentials are correct in the `.env` file
+- Ensure your Salesforce credentials are correct in the environment variables
 - Verify that your security token is up to date
 - Check that the MCP server is properly configured in your client application
 - Review the console logs for connection errors
+- Make sure you have Node.js 22+ installed for npx to work properly
 
 ## Requirements
 

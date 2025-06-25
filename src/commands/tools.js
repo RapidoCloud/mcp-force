@@ -46,9 +46,11 @@ export function registerToolsCommand(program) {
         // e.g., "salesforce-developers/salesforce-platform-apis/REST/soql-query.js"
         // or "salesforce-developers/salesforce-platform-apis/1Tooling/Sandbox/some-tool.js"
         const pathParts = tool.path.split('/');
-        const workspace = pathParts[1] || 'Unknown'; // salesforce-platform-apis (workspace)
-        const collection = pathParts[2] || 'Unknown'; // REST, Auth, 1Tooling (collection)
-        const subcollection = pathParts[3] && !pathParts[3].endsWith('.js') ? pathParts[3] : null; // (optional)
+        const workspace = pathParts[0] || 'Unknown'; // salesforce-platform-apis (workspace)
+        const collection = pathParts[1] || 'Unknown'; // REST, Auth, 1Tooling (collection)
+        const subcollection = pathParts[2] && !pathParts[2].endsWith('.js') ? pathParts[2] : null; // (optional)
+
+        //console.log('### paths = ', tool.path, workspace, collection, subcollection);
 
         if (!acc[workspace]) acc[workspace] = {};
         if (!acc[workspace][collection]) acc[workspace][collection] = {};
