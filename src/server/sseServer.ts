@@ -1,17 +1,27 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
+import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 
+import { DiscoverToolsOptions } from '@rapidocloud/mcp-tools';
 import { setupServer } from './setupServer.js';
 
-export function sseServer(SERVER_NAME, SERVER_VERSION) {
+interface TransportMap {
+  [sessionId: string]: SSEServerTransport;
+}
+
+interface ServerMap {
+  [sessionId: string]: Server;
+}
+
+export function sseServer(SERVER_NAME: string, SERVER_VERSION: string, options: DiscoverToolsOptions = {}): void {
   const app = express();
-  const transports = {};
-  const servers = {};
+  const transports: TransportMap = {};
+  const servers: ServerMap = {};
 
   // SSE mode
-  app.get('/sse', async (_req, res) => {
+  app.get('/sse', async (_req: Request, res: Response) => {
     // Create a new Server instance for each session
-    const server = setupServer(SERVER_NAME, SERVER_VERSION);
+    const server = await setupServer(SERVER_NAME, SERVER_VERSION, options);
 
     const transport = new SSEServerTransport('/messages', res);
     transports[transport.sessionId] = transport;
@@ -26,8 +36,8 @@ export function sseServer(SERVER_NAME, SERVER_VERSION) {
     await server.connect(transport);
   });
 
-  app.post('/messages', async (req, res) => {
-    const sessionId = req.query.sessionId;
+  app.post('/messages', async (req: Request, res: Response) => {
+    const sessionId = req.query.sessionId as string;
     const transport = transports[sessionId];
     const server = servers[sessionId];
 

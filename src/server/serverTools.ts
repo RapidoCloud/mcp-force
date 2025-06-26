@@ -1,16 +1,18 @@
-import { McpError, ErrorCode } from '@modelcontextprotocol/sdk/types.js';
+import { McpError, ErrorCode, CallToolRequest, CallToolResult, ListToolsResult } from '@modelcontextprotocol/sdk/types.js';
 
-import { discoverTools } from '@rapidocloud/mcp-tools';
+import { discoverTools, Tool, DiscoverToolsOptions } from '@rapidocloud/mcp-tools';
 
-const TOOLS = await discoverTools();
+let TOOLS: Tool[] = [];
 
-export async function callToolRequest(request) {
+export async function callToolRequest(request: CallToolRequest, options: DiscoverToolsOptions): Promise<CallToolResult> {
+  TOOLS = await discoverTools(options);
+
   const toolName = request.params.name;
   const tool = TOOLS.find((t) => t.definition.function.name === toolName);
   if (!tool) {
     throw new McpError(ErrorCode.MethodNotFound, `Unknown tool: ${toolName}`);
   }
-  const args = request.params.arguments;
+  const args = request.params.arguments || {};
   const requiredParameters = tool.definition?.function?.parameters?.required || [];
   for (const requiredParameter of requiredParameters) {
     if (!(requiredParameter in args)) {
@@ -27,7 +29,7 @@ export async function callToolRequest(request) {
         },
       ],
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error('[Error] Failed to fetch data:', error);
     throw new McpError(ErrorCode.InternalError, `API error: ${error.message}`);
   }
@@ -35,28 +37,30 @@ export async function callToolRequest(request) {
 
 /**
  * For server.setRequestHandler(ListToolsRequestSchema)
- *
- * @param {*} tools
- * @returns
  */
-
-export async function listToolsRequest() {
+export async function listToolsRequest(options: DiscoverToolsOptions): Promise<ListToolsResult> {
   return {
-    tools: await transformTools(),
+    tools: await transformTools(options),
   };
 }
 
-async function transformTools() {
+async function transformTools(options: DiscoverToolsOptions) {
+  TOOLS = await discoverTools(options);
+
   return TOOLS.map((tool) => {
     const definitionFunction = tool.definition?.function;
     if (!definitionFunction) {
       console.error('### Tool definition function is missing:', tool);
-      return;
+      return undefined;
     }
     return {
       name: definitionFunction.name,
       description: definitionFunction.description,
-      inputSchema: definitionFunction.parameters,
+      inputSchema: {
+        type: 'object' as const,
+        properties: definitionFunction.parameters?.properties || {},
+        required: definitionFunction.parameters?.required || [],
+      },
     };
-  }).filter(Boolean);
+  }).filter((tool): tool is NonNullable<typeof tool> => tool !== undefined);
 }
