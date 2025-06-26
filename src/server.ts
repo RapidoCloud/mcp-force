@@ -36,7 +36,7 @@ program
   .option('--barredToolNames <names>', 'Comma-separated list of tool names to exclude')
   .option('--barredtoolnames <names>', 'Comma-separated list of tool names to exclude (alias)')
   .action(async (options) => {
-    console.log('Starting MCP server with options:', options);
+    console.error('Starting MCP server with options:', options);
 
     const { isStdio, discoverToolsOptions } = processCommandOptions(options);
 
