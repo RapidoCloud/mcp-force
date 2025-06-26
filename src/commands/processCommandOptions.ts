@@ -9,19 +9,19 @@ export function processCommandOptions(options: Record<string, any>): { isStdio: 
   const barredToolNames = options.barredToolNames || options.barredtoolnames;
 
   if (selectedAPIs) {
-    console.log(
+    console.error(
       'Selected APIs:',
       selectedAPIs.split(',').map((api: string) => api.trim())
     );
   }
   if (barredAPIs) {
-    console.log(
+    console.error(
       'Barred APIs:',
       barredAPIs.split(',').map((api: string) => api.trim())
     );
   }
   if (barredToolNames) {
-    console.log(
+    console.error(
       'Barred Tool Names:',
       barredToolNames.split(',').map((name: string) => name.trim())
     );
