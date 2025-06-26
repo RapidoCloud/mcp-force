@@ -1,3 +1,10 @@
+# [1.0.0-dev.5](https://github.com/RapidoCloud/mcp-force/compare/v1.0.0-dev.4...v1.0.0-dev.5) (2025-06-26)
+
+
+### Features
+
+* command options to select APIs ([331515a](https://github.com/RapidoCloud/mcp-force/commit/331515ab33682a59576e38c559bb0b6cedb542e2))
+
 # [1.0.0-dev.4](https://github.com/RapidoCloud/mcp-force/compare/v1.0.0-dev.3...v1.0.0-dev.4) (2025-06-25)
 
 
