@@ -2,6 +2,10 @@
 
 This program provides an MCP (Model Context Protocol) server that exposes Salesforce APIs as tools for use in AI agents. It enables AI assistants like Claude Desktop and VS Code to interact with your Salesforce organization through natural language.
 
+Currently, the following APIs are covered :
+
+- Salesforce Platform APIs : REST API, Bulk v2 API, GraphQL API, Tooling API, Auth API
+
 ## EXPERIMENTAL
 
 This package is experimental.
@@ -38,7 +42,75 @@ SALESFORCE_ACCESS_TOKEN='<your_access_token_here>'
 PORT=3021
 ```
 
-### 2. VS Code Configuration
+### 3. Command Line Usage
+
+#### Display the help menu with available commands and options
+
+```bash
+npx @rapidocloud/mcp-force@1.0.0-dev.5 --help
+```
+
+#### List all the Salesforce API endpoints currently known to MCP Force
+
+```bash
+npx @rapidocloud/mcp-force@1.0.0-dev.5  list-tools
+```
+
+#### Run a specific version of MCP Force
+
+```bash
+npx @rapidocloud/mcp-force@1.0.0-dev.5
+```
+
+#### Run the MCP server in default mode with all APIs selected
+
+```bash
+npx @rapidocloud/mcp-force run-server
+```
+
+#### Run the MCP server only with specified APIs to reduce the number of tools loaded
+
+```bash
+npx @rapidocloud/mcp-force run-server --selectedAPIs 'rest,tooling'
+```
+
+#### Run the MCP server with all APIs except for specified ones
+
+```bash
+npx @rapidocloud/mcp-force run-server --barredAPIs 'bulk'
+```
+
+#### Run the MCP server with all API endpoints except for specified tool names
+
+```bash
+npx @rapidocloud/mcp-force run-server --barredToolNames 'run_tests_sync, tooling_run_tests_async'
+```
+
+#### Run the MCP server with a specific version of MCP Tools, selected APIs and barred APIs
+
+```bash
+npm install -g @rapidocloud/mcptools@1.0.0-dev.9 1>&2 && npx @rapidocloud/mcp-force@1.0.0-dev.5 run-server --stdio --selectedAPIs 'rest, tooling, metadata' --barredAPIs 'auth, bulk, graphql'
+```
+
+To use this in your MCP server configuration :
+
+```json
+{
+  "servers": {
+    "mcpforce": {
+      "command": "bash",
+      "args": ["-c", "npm install -g @rapidocloud/mcp-tools@1.0.0-dev.9 1>&2 && npx @rapidocloud/mcp-force@1.0.0-dev.5 run-server --stdio --selectedAPIs 'rest, tooling, metadata' --barredAPIs 'auth, bulk, graphql'"],
+      "env": {
+        "SALESFORCE_ENDPOINT": "https://mydomain-dev-ed.developer.my.salesforce.com",
+        "SALESFORCE_ACCESS_TOKEN": "<your_access_token_here>",
+        "PORT": "3021"
+      }
+    }
+  }
+}
+```
+
+### 4. VS Code Configuration
 
 Create or update `.vscode/mcp.json` to configure the MCP server:
 
@@ -58,7 +130,7 @@ Create or update `.vscode/mcp.json` to configure the MCP server:
 }
 ```
 
-### 3. Claude Desktop Configuration
+### 5. Claude Desktop Configuration
 
 Add the MCP server to your Claude Desktop configuration file:
 
@@ -89,7 +161,8 @@ No installation required! The MCP server will be automatically downloaded and ru
 For development or testing, you can also run it directly:
 
 ```bash
-npx @rapidocloud/mcp-force
+npx @rapidocloud/mcp-force list-tools
+npx @rapidocloud/mcp-force run-server
 ```
 
 ## Usage Examples
@@ -144,15 +217,6 @@ Breakdown:
 - Largest opportunity: $500,000
 - Smallest opportunity: $25,000
 ```
-
-## Available Tools
-
-The MCP server provides access to various Salesforce operations through the `@rapidocloud/mcp-tools` package, including:
-
-- Salesforce Auth
-- Salesforce REST API
-- Salesforce Tooling API
-- Salesforce GraphQL API
 
 ## Troubleshooting
 
