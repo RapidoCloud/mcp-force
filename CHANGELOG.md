@@ -1,3 +1,10 @@
+# [1.0.0-dev.6](https://github.com/RapidoCloud/mcp-force/compare/v1.0.0-dev.5...v1.0.0-dev.6) (2025-06-26)
+
+
+### Bug Fixes
+
+* updated mcp.json command ([a8bd76d](https://github.com/RapidoCloud/mcp-force/commit/a8bd76d9fc10338a3fde8432958fc702d2931c05))
+
 # [1.0.0-dev.5](https://github.com/RapidoCloud/mcp-force/compare/v1.0.0-dev.4...v1.0.0-dev.5) (2025-06-26)
 
 
