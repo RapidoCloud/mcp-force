@@ -1,0 +1,573 @@
+import { ListResourcesResult, ReadResourceResult, GetPromptResult, Resource } from '@modelcontextprotocol/sdk/types.js';
+
+export async function listResourcesRequest(): Promise<ListResourcesResult> {
+  const resources = dependencyResourcesList;
+
+  console.error(
+    `### Found ${resources.length} resources`,
+    resources.map((r) => r.name)
+  );
+  return { resources };
+}
+
+let lastAnalysisData: any = null;
+
+export async function readResourceRequest(request: { params?: { uri: string } }): Promise<ReadResourceResult> {
+  return readDependencyResource(request.params?.uri ?? '', lastAnalysisData);
+}
+
+/*********************************************************************
+ * PRIVATE FUNCTIONS
+ *********************************************************************/
+
+// 1. Resource definition for ListResourcesResult
+const dependencyResourcesList: Resource[] = [
+  {
+    uri: 'dependency-tree://viewer',
+    name: 'Interactive Dependency Tree Viewer',
+    description: 'D3.js-based interactive tree visualization for code dependencies with expandable nodes and cycle detection',
+    mimeType: 'text/html',
+  },
+];
+
+// 2. D3.js HTML template stored as a constant
+const DEPENDENCY_TREE_HTML = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Dependency Tree</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <style>
+        /* Include all the CSS from the previous artifact */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+        }
+        
+        .controls {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            border-left: 4px solid #007bff;
+        }
+        
+        .controls button {
+            margin: 5px;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .expand-btn {
+            background: #28a745;
+            color: white;
+        }
+        
+        .expand-btn:hover {
+            background: #218838;
+        }
+        
+        .expand-btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        
+        .reset-btn {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .reset-btn:hover {
+            background: #c82333;
+        }
+        
+        #tree-container {
+            width: 100%;
+            height: 600px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        
+        .node circle {
+            cursor: pointer;
+            stroke: #333;
+            stroke-width: 2px;
+        }
+        
+        .node.target circle {
+            fill: #ff6b6b;
+            stroke: #d63031;
+        }
+        
+        .node.class circle {
+            fill: #74b9ff;
+            stroke: #0984e3;
+        }
+        
+        .node.function circle {
+            fill: #55a3ff;
+            stroke: #2d3436;
+        }
+        
+        .node.module circle {
+            fill: #a29bfe;
+            stroke: #6c5ce7;
+        }
+        
+        .node.interface circle {
+            fill: #fd79a8;
+            stroke: #e84393;
+        }
+        
+        .node.type circle {
+            fill: #fdcb6e;
+            stroke: #e17055;
+        }
+        
+        .node.constant circle {
+            fill: #6c5ce7;
+            stroke: #5f3dc4;
+        }
+        
+        .node.external circle {
+            fill: #b2bec3;
+            stroke: #636e72;
+        }
+        
+        .node.circular circle {
+            fill: #ff7675;
+            stroke: #d63031;
+            stroke-dasharray: 5,5;
+        }
+        
+        .node.selected circle {
+            stroke: #2d3436;
+            stroke-width: 4px;
+        }
+        
+        .node text {
+            font-size: 12px;
+            font-family: 'Courier New', monospace;
+            pointer-events: none;
+        }
+        
+        .link {
+            fill: none;
+            stroke: #999;
+            stroke-width: 2px;
+        }
+        
+        .link.circular {
+            stroke: #ff7675;
+            stroke-dasharray: 5,5;
+        }
+        
+        .tooltip {
+            position: absolute;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            border-radius: 5px;
+            pointer-events: none;
+            font-size: 12px;
+            z-index: 1000;
+        }
+        
+        .legend {
+            margin-top: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .legend-circle {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 2px solid #333;
+        }
+        
+        /* Embedded data styling */
+        .data-container {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 10px;
+            margin-bottom: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .data-toggle {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Code Dependency Tree</h1>
+        
+        <!-- Data inspection panel -->
+        <button class="data-toggle" onclick="toggleDataView()">Toggle Raw Data</button>
+        <div id="data-container" class="data-container" style="display: none;">
+            <pre id="raw-data"></pre>
+        </div>
+        
+        <div class="controls">
+            <button id="expand-selected" class="expand-btn" disabled>Expand Selected</button>
+            <button id="expand-all" class="expand-btn">Expand All Visible</button>
+            <button id="reset-view" class="reset-btn">Reset View</button>
+            <span id="selection-info" style="margin-left: 15px; font-weight: bold;"></span>
+        </div>
+        <div id="tree-container"></div>
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-circle" style="background: #ff6b6b; border-color: #d63031;"></div>
+                <span>Target</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-circle" style="background: #74b9ff; border-color: #0984e3;"></div>
+                <span>Class</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-circle" style="background: #55a3ff; border-color: #2d3436;"></div>
+                <span>Function</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-circle" style="background: #a29bfe; border-color: #6c5ce7;"></div>
+                <span>Module</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-circle" style="background: #fd79a8; border-color: #e84393;"></div>
+                <span>Interface</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-circle" style="background: #b2bec3; border-color: #636e72;"></div>
+                <span>External</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-circle" style="background: #ff7675; border-color: #d63031; border-style: dashed;"></div>
+                <span>Circular</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Placeholder for dependency data - will be replaced by MCP server
+        let DEPENDENCY_DATA = {{DEPENDENCY_DATA}};
+        
+        function toggleDataView() {
+            const container = document.getElementById('data-container');
+            const rawData = document.getElementById('raw-data');
+            
+            if (container.style.display === 'none') {
+                container.style.display = 'block';
+                rawData.textContent = JSON.stringify(DEPENDENCY_DATA, null, 2);
+            } else {
+                container.style.display = 'none';
+            }
+        }
+        
+        // Include the complete DependencyTree class from previous artifact
+        class DependencyTree {
+            constructor(containerId) {
+                this.container = d3.select(\`#\${containerId}\`);
+                this.width = 1160;
+                this.height = 580;
+                this.selectedNodes = new Set();
+                this.analyzedItems = new Set();
+                
+                this.svg = this.container.append('svg')
+                    .attr('width', this.width)
+                    .attr('height', this.height);
+                
+                this.g = this.svg.append('g');
+                
+                const zoom = d3.zoom()
+                    .scaleExtent([0.1, 3])
+                    .on('zoom', (event) => {
+                        this.g.attr('transform', event.transform);
+                    });
+                
+                this.svg.call(zoom);
+                
+                this.tooltip = d3.select('body').append('div')
+                    .attr('class', 'tooltip')
+                    .style('opacity', 0);
+                
+                this.tree = d3.tree().size([this.height - 100, this.width - 200]);
+                
+                this.setupControls();
+            }
+            
+            setupControls() {
+                d3.select('#expand-selected').on('click', () => {
+                    if (this.selectedNodes.size > 0) {
+                        this.expandSelected();
+                    }
+                });
+                
+                d3.select('#expand-all').on('click', () => {
+                    this.expandAllVisible();
+                });
+                
+                d3.select('#reset-view').on('click', () => {
+                    this.resetView();
+                });
+            }
+            
+            loadData(data) {
+                this.data = data;
+                this.root = this.processData(data);
+                this.analyzedItems.add(data.target.name);
+                this.update();
+            }
+            
+            processData(data) {
+                const root = {
+                    name: data.target.name,
+                    type: data.target.type,
+                    source: data.target.source,
+                    id: data.target.id,
+                    isTarget: true,
+                    expanded: true,
+                    circular: false,
+                    children: data.dependencies.map(dep => ({
+                        ...dep,
+                        hasChildren: !dep.expanded && this.couldHaveChildren(dep),
+                        parent: data.target
+                    }))
+                };
+                
+                return d3.hierarchy(root);
+            }
+            
+            couldHaveChildren(node) {
+                return !node.source.includes('node_modules') && 
+                       !node.source.includes('external') &&
+                       !node.circular &&
+                       !this.analyzedItems.has(node.name);
+            }
+            
+            update() {
+                const treeData = this.tree(this.root);
+                
+                const links = this.g.selectAll('.link')
+                    .data(treeData.links(), d => d.target.data.id);
+                
+                links.enter()
+                    .append('path')
+                    .attr('class', d => \`link \${d.target.data.circular ? 'circular' : ''}\`)
+                    .merge(links)
+                    .attr('d', d3.linkHorizontal()
+                        .x(d => d.y)
+                        .y(d => d.x));
+                
+                links.exit().remove();
+                
+                const nodes = this.g.selectAll('.node')
+                    .data(treeData.descendants(), d => d.data.id);
+                
+                const nodeEnter = nodes.enter()
+                    .append('g')
+                    .attr('class', d => {
+                        let classes = 'node';
+                        if (d.data.isTarget) classes += ' target';
+                        else classes += \` \${d.data.type}\`;
+                        if (d.data.circular) classes += ' circular';
+                        return classes;
+                    });
+                
+                nodeEnter.append('circle')
+                    .attr('r', d => d.data.isTarget ? 8 : 6)
+                    .on('click', (event, d) => this.toggleSelection(d))
+                    .on('mouseover', (event, d) => this.showTooltip(event, d))
+                    .on('mouseout', () => this.hideTooltip());
+                
+                nodeEnter.append('text')
+                    .attr('dy', 3)
+                    .attr('x', d => d.children || d._children ? -10 : 10)
+                    .style('text-anchor', d => d.children || d._children ? 'end' : 'start')
+                    .text(d => d.data.name);
+                
+                const nodeUpdate = nodeEnter.merge(nodes);
+                
+                nodeUpdate.transition()
+                    .duration(500)
+                    .attr('transform', d => \`translate(\${d.y},\${d.x})\`);
+                
+                nodes.exit().remove();
+                
+                this.updateSelectionInfo();
+            }
+            
+            toggleSelection(d) {
+                const nodeId = d.data.id;
+                if (this.selectedNodes.has(nodeId)) {
+                    this.selectedNodes.delete(nodeId);
+                    d3.select(event.currentTarget.parentNode).classed('selected', false);
+                } else {
+                    this.selectedNodes.add(nodeId);
+                    d3.select(event.currentTarget.parentNode).classed('selected', true);
+                }
+                
+                d3.select('#expand-selected').property('disabled', this.selectedNodes.size === 0);
+                this.updateSelectionInfo();
+            }
+            
+            updateSelectionInfo() {
+                const count = this.selectedNodes.size;
+                d3.select('#selection-info')
+                    .text(count > 0 ? \`\${count} node\${count > 1 ? 's' : ''} selected\` : '');
+            }
+            
+            showTooltip(event, d) {
+                const tooltipContent = \`
+                    <strong>\${d.data.name}</strong><br/>
+                    Type: \${d.data.type}<br/>
+                    Source: \${d.data.source}<br/>
+                    \${d.data.relationship ? \`Relationship: \${d.data.relationship}<br/>\` : ''}
+                    \${d.data.circular ? '<span style="color: #ff7675;">⚠ Circular dependency</span>' : ''}
+                \`;
+                
+                this.tooltip.transition().duration(200).style('opacity', 0.9);
+                this.tooltip.html(tooltipContent)
+                    .style('left', (event.pageX + 10) + 'px')
+                    .style('top', (event.pageY - 28) + 'px');
+            }
+            
+            hideTooltip() {
+                this.tooltip.transition().duration(500).style('opacity', 0);
+            }
+            
+            expandSelected() {
+                console.log('Expand selected - integrate with MCP for further analysis');
+            }
+            
+            expandAllVisible() {
+                console.log('Expand all - integrate with MCP for further analysis');
+            }
+            
+            resetView() {
+                this.selectedNodes.clear();
+                this.g.selectAll('.node').classed('selected', false);
+                
+                const transform = d3.zoomIdentity.translate(50, this.height / 2).scale(1);
+                this.svg.transition().duration(750)
+                    .call(d3.zoom().transform, transform);
+                
+                this.updateSelectionInfo();
+                d3.select('#expand-selected').property('disabled', true);
+            }
+        }
+        
+        // Initialize the tree with provided data
+        const tree = new DependencyTree('tree-container');
+        if (DEPENDENCY_DATA && DEPENDENCY_DATA.target) {
+            tree.loadData(DEPENDENCY_DATA);
+        } else {
+            console.error('No dependency data provided');
+        }
+        
+        // Expose for debugging
+        window.dependencyTree = tree;
+        window.dependencyData = DEPENDENCY_DATA;
+    </script>
+</body>
+</html>`;
+
+// 3. Resource reader function
+const readDependencyResource = (uri: string, dependencyData?: any): ReadResourceResult => {
+  if (uri === 'dependency-tree://viewer') {
+    // Replace the placeholder with actual dependency data
+    const htmlWithData = DEPENDENCY_TREE_HTML.replace('{{DEPENDENCY_DATA}}', dependencyData ? JSON.stringify(dependencyData) : 'null');
+
+    return {
+      contents: [
+        {
+          uri,
+          mimeType: 'text/html',
+          text: htmlWithData,
+        },
+      ],
+    };
+  }
+
+  throw new Error(`Unknown resource URI: ${uri}`);
+};
+
+// 4. Updated prompt to include visualization
+// const getDependencyAnalysisPromptWithVisualization = (args: Record<string, unknown>): GetPromptResult => {
+//   const targetItem = args.target_item as string;
+//   const language = args.language as string;
+//   const codebaseContext = (args.codebase_context as string) || '';
+//   const analysisLevel = (args.analysis_level as number) || 1;
+
+//   return {
+//     description: 'Code dependency analyzer with integrated D3.js tree visualization',
+//     messages: [],
+//   };
+// };
+
+// 5. MCP Server integration example
+// export class DependencyAnalysisMCPServer {
+//   private lastAnalysisData: any = null;
+
+//   setupResourceHandlers(server: any) {
+//     // List resources
+//     server.setRequestHandler('resources/list', async () => {
+//       return dependencyResourcesList;
+//     });
+
+//     // Read resource
+//     server.setRequestHandler('resources/read', async (request: any) => {
+//       const { uri } = request.params;
+//       return readDependencyResource(uri, this.lastAnalysisData);
+//     });
+//   }
+
+//   setupPromptHandlers(server: any) {
+//     // Get prompt - store analysis data for visualization
+//     server.setRequestHandler('prompts/get', async (request: any) => {
+//       if (request.params.name === 'code-dependency-analysis') {
+//         return getDependencyAnalysisPromptWithVisualization(request.params.arguments || {});
+//       }
+//       throw new Error(`Unknown prompt: ${request.params.name}`);
+//     });
+//   }
+
+//   // Call this when analysis is complete to store data for visualization
+//   setAnalysisData(data: any) {
+//     this.lastAnalysisData = data;
+//   }
+// }

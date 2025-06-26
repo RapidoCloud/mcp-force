@@ -3,8 +3,7 @@ const path = require('path');
 module.exports = {
   mode: 'production',
   entry: {
-    mcpServer: './src/mcpServer.js',
-    listTools: './src/listTools.js',
+    server: './dist/server.js',
   },
   output: {
     path: path.resolve(__dirname, 'dist'),
@@ -28,42 +27,24 @@ module.exports = {
   },
   module: {
     rules: [
-      {
-        test: /\.js$/,
-        exclude: /node_modules/,
-        use: {
-          loader: 'babel-loader',
-          options: {
-            presets: [
-              [
-                '@babel/preset-env',
-                {
-                  targets: {
-                    node: '22',
-                  },
-                  modules: false,
-                },
-              ],
-            ],
-          },
-        },
-      },
+      // TypeScript is already compiled to modern JavaScript
+      // No additional processing needed
     ],
   },
   resolve: {
-    extensions: ['.js'],
-    modules: ['node_modules', 'src'],
+    extensions: ['.js', '.ts'],
+    modules: ['node_modules', 'dist'],
   },
   plugins: [
     // Add shebang to the mcpServer output and make it executable
     {
       apply: (compiler) => {
         compiler.hooks.emit.tap('AddShebang', (compilation) => {
-          const mcpServerAsset = compilation.assets['mcpServer.js'];
+          const mcpServerAsset = compilation.assets['server.js'];
           if (mcpServerAsset) {
             const source = mcpServerAsset.source();
             const withShebang = `#!/usr/bin/env node\n${source}`;
-            compilation.assets['mcpServer.js'] = {
+            compilation.assets['server.js'] = {
               source: () => withShebang,
               size: () => withShebang.length,
             };
@@ -74,11 +55,11 @@ module.exports = {
         compiler.hooks.afterEmit.tap('MakeExecutable', () => {
           const fs = require('fs');
           const path = require('path');
-          const filePath = path.resolve(__dirname, 'dist', 'mcpServer.js');
+          const filePath = path.resolve(__dirname, 'dist', 'server.js');
           try {
             fs.chmodSync(filePath, 0o755);
           } catch (error) {
-            console.warn('Could not make mcpServer.js executable:', error.message);
+            console.warn('Could not make server.js executable:', error.message);
           }
         });
       },

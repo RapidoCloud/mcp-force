@@ -1,13 +1,18 @@
 {
   "servers": {
-    "mcpforce-in-vscode": {
+    "mcpforce": {
       "command": "npx",
-      "args": ["-y", "@rapidocloud/mcp-force@1.0.0-dev.4", "--package", "@rapidocloud/mcp-tools@1.0.0-dev.8"],
+      "args": ["-y", "@rapidocloud/mcp-force@1.0.0-dev.4", "--package", "@rapidocloud/mcp-tools@1.0.0-dev.9", "run-server", "--selectedAPIs", "rest"],
       "env": {
         "SALESFORCE_ENDPOINT": "https://rbarrow-dev-ed.my.salesforce.com",
         "SALESFORCE_ACCESS_TOKEN": "00D1i000000ULGK!ARMAQASwYw80Xu_YRiPEbYL.LM8ba_AVTBBBROmUzz.2DKsqS6lFhpeBH4LKbBnG7yIjLJTu7oIhEhfigdV5_EKFRD9lH53U",
         "PORT": "3021"
       }
+    },
+
+    "sf-cli-codefriar": {
+      "command": "npx",
+      "args": ["-y", "/Users/rupert/Documents/Workspaces/WS_playground/sf-cli-mcp-codefriar/sf-mcp/build/index.js"]
     }
   }
 }
