@@ -1,3 +1,19 @@
+# [1.0.0-alpha.2](https://github.com/RapidoCloud/mcp-force/compare/v1.0.0-alpha.1...v1.0.0-alpha.2) (2025-06-27)
+
+
+### Bug Fixes
+
+* updated mcp.json command ([c775c38](https://github.com/RapidoCloud/mcp-force/commit/c775c3858ab60ff5a271dbe4079eddf05d923790))
+* updated mcp.json command ([a8bd76d](https://github.com/RapidoCloud/mcp-force/commit/a8bd76d9fc10338a3fde8432958fc702d2931c05))
+
+
+### Features
+
+* added REST APIs for Search, Logs, Actions, OpenAPISchema ([46d4a35](https://github.com/RapidoCloud/mcp-force/commit/46d4a359e64b661a80e08f48b1f046020ebe2917))
+* command options to select APIs ([331515a](https://github.com/RapidoCloud/mcp-force/commit/331515ab33682a59576e38c559bb0b6cedb542e2))
+* prompts, resources, API selection ([aea6871](https://github.com/RapidoCloud/mcp-force/commit/aea6871fae6b60a281bcd0f2ba08c71e04664f61))
+* using peerDependencies for mcp-tools ([5964783](https://github.com/RapidoCloud/mcp-force/commit/5964783d43a11d69e9953ff16c18c53f444e7554))
+
 # [1.0.0-dev.8](https://github.com/RapidoCloud/mcp-force/compare/v1.0.0-dev.7...v1.0.0-dev.8) (2025-06-27)
 
 
