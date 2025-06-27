@@ -1,209 +1,169 @@
 export const PROMPTS = {
   'code-dependency-analysis': {
     name: 'code-dependency-analysis',
-    description: 'Analyzes code dependencies starting from a given input item and presents results in an interactive tree visualization format',
+    description: 'Analyzes Salesforce metadata dependencies starting from a given component and presents results in an interactive tree visualization format',
     arguments: [
       {
         name: 'target_item',
-        description: 'The code item to analyze (class name, function name, module name, etc.)',
+        description: 'The Salesforce component to analyze (Apex class name, Flow name, Custom Object API name, Custom Field API name, etc.)',
         required: true,
       },
       {
-        name: 'language',
-        description: 'Programming language context for the analysis',
+        name: 'component_type',
+        description: 'Type of Salesforce component (ApexClass, Flow, CustomObject, CustomField, Layout, etc.)',
         required: true,
-      },
-      {
-        name: 'codebase_context',
-        description: 'Additional context about the codebase (file paths, project structure, etc.)',
-        required: false,
-      },
-      {
-        name: 'analysis_level',
-        description: 'Maximum depth to analyze initially (default: 1)',
-        required: false,
       },
     ],
-    messages: (params: any) => [
-      {
-        role: 'system',
-        content: {
-          type: 'text',
-          text: `You are a code dependency analyzer that provides both structured analysis and interactive visualization.
-    
-    ## Response Format:
-    Your response must include:
-    1. **Analysis Summary**: Brief overview of findings
-    2. **JSON Data**: Structured dependency data
-    3. **Visualization**: Reference to the interactive tree viewer
-    
-    ## JSON Schema:
-    {
-      "target": { "name": string, "type": string, "source": string, "id": string },
-      "dependencies": [{ "name": string, "type": string, "source": string, "relationship": string, "id": string, "expanded": boolean, "circular": boolean }],
-      "analyzed_items": string[],
-      "circular_dependencies": [{ "from": string, "to": string, "path": string[] }]
-    }
-    
-    ## Visualization Integration:
-    After providing your analysis and JSON data, include:
-    "📊 **Interactive Visualization**: View the dependency tree at dependency-tree://viewer"
-    
-    This will render an interactive D3.js tree with your analysis data embedded.`,
-        },
-      },
-      {
-        role: 'user',
-        content: {
-          type: 'text',
-          text: `Analyze dependencies for: **${params.arguments?.target_item}** (${params.arguments?.language})
-    
-    Context: ${params.arguments?.codebase_context ?? ''}
-    Analysis Level: ${params.arguments?.analysis_level ?? 1}
-    
-    Provide:
-    1. Summary of findings
-    2. Complete JSON dependency data  
-    3. Reference to interactive visualization`,
-        },
-      },
+    messages: (params: any) => {
+      // Store analysis parameters for resource generation
+      const analysisData = {
+        target_item: params.arguments?.target_item,
+        component_type: params.arguments?.component_type,
+        timestamp: new Date().toISOString(),
+      };
 
-      {
-        role: 'user',
-        content: {
-          type: 'text',
-          text: `You are a code dependency analyzer. Your task is to analyze code dependencies starting from a given input item and present results in an interactive tree visualization.
+      // Store in global scope for resource access
+      try {
+        (globalThis as any).lastDependencyAnalysis = analysisData;
+      } catch (e) {
+        console.error('Could not store analysis data globally');
+      }
 
-## Input Parameters:
-- **target_item**: ${params.arguments?.target_item} (class name, function name, module name, etc.)
-- **language**: ${params.arguments?.language} (programming language context)
-- **codebase_context**: ${params.arguments?.codebase_context ?? ''} (additional context about the codebase)
-- **analysis_level**: ${params.arguments?.analysis_level ?? 1} (maximum depth to analyze initially)
+      return [
+        {
+          role: 'user',
+          content: {
+            type: 'text',
+            text: `You are a Salesforce metadata dependency analyzer that provides both structured analysis and interactive visualization using the Salesforce Tooling API.
 
-## Analysis Instructions:
+## Your Task:
+Analyze dependencies for: **${params.arguments?.target_item}** (${params.arguments?.component_type})
 
-1. **Identify the target item** in the provided codebase context
-2. **Extract first-level dependencies** and categorize them by type:
-   - **Classes**: Other classes this item depends on
-   - **Functions/Methods**: External functions or methods called
-   - **Modules/Imports**: External modules or libraries imported
-   - **Interfaces**: Interfaces implemented or extended
-   - **Types**: Custom types or data structures used
-   - **Constants/Variables**: External constants or global variables referenced
+## How to do it:
 
-3. **For each dependency, provide**:
-   - **Name**: The exact name of the dependency
-   - **Type**: The category (class, function, module, etc.)
-   - **Source**: Where it's defined (file path, external library, etc.)
-   - **Relationship**: How it's used (inheritance, composition, method call, etc.)
+1. **Find the target component ID** using the Tooling API:
+   Query the appropriate object (e.g., ApexClass, Flow, CustomObject) to get the ID of the target component.
 
-4. **Cycle Detection**: Track all analyzed items to prevent infinite loops. If a circular dependency is detected, mark it clearly.
+2. **Query for dependencies** using the target component ID:
+   \`\`\`sql
+   SELECT RefMetadataComponentId, RefMetadataComponentName, RefMetadataComponentType
+   FROM MetadataComponentDependency 
+   WHERE MetadataComponentId = '<targetItemId>'
+   \`\`\`
 
-5. **Output Format**: Structure your response as JSON that can be consumed by the D3.js visualization:
+3. **Recursively analyze dependencies** (up to 5 levels deep):
+   For each dependency found in step 2, repeat the query using their RefMetadataComponentId as the new MetadataComponentId to find their dependencies. Continue this process for up to 5 levels of depth.
+   
+   **Important**: Track analyzed component IDs to prevent infinite loops from circular dependencies. If a component ID has already been analyzed in the current dependency path, mark it as circular and stop recursion for that branch.
 
-\`\`\`json
-{
-  "target": {
-    "name": "${params.arguments?.target_item}",
-    "type": "class|function|module",
-    "source": "file_path_or_library",
-    "id": "unique_identifier"
-  },
-  "dependencies": [
-    {
-      "name": "dependency_name",
-      "type": "class|function|module|interface|type|constant",
-      "source": "file_path_or_library",
-      "relationship": "inherits|imports|calls|implements|uses",
-      "id": "unique_identifier",
-      "expanded": false,
-      "circular": false,
-      "children": []
-    }
-  ],
-  "analyzed_items": ["${params.arguments?.target_item}"],
-  "circular_dependencies": [
-    {
-      "from": "item1",
-      "to": "item2",
-      "path": ["item1", "intermediate", "item2", "item1"]
-    }
-  ]
-}
+This approach finds what the target component depends ON (upstream dependencies) in a hierarchical tree structure.
+
+## Supported Component Types in Salesforce:
+**Primary Types (Most Reliable):**
+- **ApexClass**: Apex classes (includes triggers)
+- **Flow**: Flows and Process Builder processes
+- **CustomObject**: Custom objects and their relationships
+- **CustomField**: Custom fields on standard and custom objects
+- **ValidationRule**: Object validation rules
+- **WorkflowRule**: Workflow rules (legacy automation)
+
+**Secondary Types (May Have Limited Support):**
+- **Layout**: Page layouts and record types
+- **CustomTab**: Custom application tabs
+- **VisualforcePage**: Visualforce pages and components
+- **LightningComponentBundle**: Lightning Web Components/Aura Components
+- **CustomLabel**: Custom labels for internationalization
+- **CustomApplication**: Custom applications
+
+## Response Format:
+Your response must include:
+1. **Analysis Summary**: Brief overview of dependencies found (what the target depends on)
+2. **Dependencies Table**: Components that the target depends on (UPSTREAM dependencies)
+3. **JSON Data**: Complete dependency tree data wrapped in \`\`\`dependency-analysis
+4. **Store Real Data**: Call storeRealAnalysisData function
+5. **Visualization**: Reference to interactive tree viewer
+6. **Limitation Notice**: Explain that due to SOQL restrictions, this shows upstream (not downstream) dependencies
+
+**BETA CONSIDERATIONS:**
+- If MetadataComponentDependency queries fail, explain the beta limitations and SOQL restrictions
+- Suggest alternative approaches (manual code review, IDE dependency analysis, DevOps Center)
+- Focus on the most reliable component types first (ApexClass, Flow, CustomObject)
+- Mention that results may be incomplete for complex org structures
+- If SOQL errors occur, try removing ORDER BY, COUNT, LIKE, or OFFSET clauses
+- Use exact string matching instead of pattern matching (LIKE not supported)
+
+## Query Strategy:
+**REMEMBER**: MetadataComponentDependency has strict SOQL limitations (no ORDER BY, COUNT, LIKE, OFFSET, etc.)
+
+1. Start with direct dependencies (Level 1) using only = and AND operators
+2. For each result, query for its dependencies (Level 2-5) with exact matches only
+3. Handle timeouts gracefully with smaller result sets (reduce LIMIT if needed)
+4. Track circular dependencies to avoid infinite loops
+5. Use LIMIT clauses but avoid OFFSET for pagination (not supported)
+6. If queries fail, try simplified WHERE conditions with fewer filters
+7. Focus on exact string matches - no LIKE patterns or wildcards
+
+## CRITICAL: Data Storage
+**IMPORTANT**: After providing your analysis, you must store the real data by calling:
+\`\`\`javascript
+// Store the real analysis data for the dependency viewer
+storeRealAnalysisData(your_analysis_data_object);
 \`\`\`
 
-## Expansion Instructions:
-When user requests expansion of specific dependencies:
-1. **Validate request**: Ensure the item hasn't been analyzed before (check analyzed_items)
-2. **Analyze dependencies** of the selected item(s)
-3. **Update the tree structure** by adding children to the expanded nodes
-4. **Mark as expanded**: Set \`expanded: true\` for processed nodes
-5. **Detect new cycles**: Check if expansion creates circular dependencies
+## Table Format:
+Present the UPSTREAM dependencies in a clear table showing:
+- **Referenced Component**: The name of the component that the target depends on
+- **Component Type**: ApexClass, Flow, CustomObject, CustomField, Layout, etc.
+- **Level**: Dependency depth (1-5)
+- **Namespace**: Component namespace (or null for unpackaged)
+- **Relationship**: How the target depends on this component (references, extends, uses, etc.)
+- **Notes**: Additional context about the dependency (Note: This shows what the target depends ON, not what depends on the target)
 
-## Important Notes:
-- **Never analyze the same item twice** - use the analyzed_items list to track
-- **Mark circular dependencies clearly** but don't expand them
-- **Provide meaningful relationship descriptions**
-- **Include source location information** when available
-- **Handle external/library dependencies** appropriately (mark as external, don't expand unless specifically requested)
+## JSON Schema (Complete Tree):
+{
+  "target": { "name": string, "type": string, "namespace": string, "id": string },
+  "dependencies": [{ 
+    "name": string, "type": string, "namespace": string, "relationship": string, 
+    "id": string, "level": number, "circular": boolean,
+    "children": [recursive dependencies up to level 5]
+  }],
+  "analyzed_items": string[],
+  "circular_dependencies": [{ "from": string, "to": string, "path": string[] }],
+  "total_levels": 5,
+  "metadata": {
+    "api_limitations": "MetadataComponentDependency is beta - results may be incomplete. SOQL restrictions: no ORDER BY, COUNT, LIKE, OFFSET, queryMore",
+    "query_performance": "Large orgs may experience timeouts. Use simple WHERE conditions with only =, !=, AND, OR operators",
+    "soql_restrictions": ["ORDER BY", "COUNT()", "queryMore()", "LIKE with MetadataComponent fields", "OFFSET", "RefMetadataComponentType = 'StandardEntity'"],
+    "supported_types": ["ApexClass", "Flow", "CustomObject", "CustomField", "ValidationRule"]
+  }
+}
 
-## Response Guidelines:
-- Start with a brief summary of what was found
-- Present the JSON structure
-- Highlight any circular dependencies detected
-- Suggest logical next steps for expansion
-- If no dependencies found, explain why (e.g., leaf node, external library, etc.)
+## Visualization Integration:
+**IMPORTANT**: After providing your analysis and JSON data, you MUST include these instructions:
 
-Ready to analyze: ${params.arguments?.target_item}`,
+📊 **Interactive Visualization Available**
+
+**For VS Code MCP Users**: 
+Ask Claude to "read the dependency-tree://viewer resource" to display the interactive HTML visualization.
+
+**For SSE/HTTP Mode**: 
+If running in SSE mode, open this link: [View Interactive Dependency Tree](http://localhost:${process.env.PORT || 3011}/dependency-viewer)
+
+**For Other MCP Clients**: 
+Access the resource dependency-tree://viewer through your client's resource interface.
+
+The interactive tree includes:
+- Hierarchical tree view showing all 5 levels of upstream dependencies (what the target depends on)
+- Color-coded dependency types (ApexClass, Flow, CustomObject, etc.)
+- Tooltips with detailed Salesforce component information
+- Zoom and pan functionality for large dependency trees
+- Dependency table view with Salesforce-specific metadata
+- Raw data toggle for debugging MetadataComponentDependency queries
+
+**Important**: The visualization data shows upstream dependency analysis (what the target depends on) due to SOQL filtering limitations on RefMetadataComponent fields.`,
+          },
         },
-      },
-    ],
-  },
-
-  'git-commit': {
-    name: 'git-commit',
-    description: 'Generate a Git commit message',
-    arguments: [
-      {
-        name: 'changes',
-        description: 'Git diff or description of changes',
-        required: true,
-      },
-    ],
-    messages: (params: any) => [
-      {
-        role: 'user' as const,
-        content: {
-          type: 'text' as const,
-          text: `Generate a concise but descriptive commit message for these changes:\n\n${params.arguments?.changes}`,
-        },
-      },
-    ],
-  },
-
-  'explain-code': {
-    name: 'explain-code',
-    description: 'Explain how code works',
-    arguments: [
-      {
-        name: 'code',
-        description: 'Code to explain',
-        required: true,
-      },
-      {
-        name: 'language',
-        description: 'Programming language',
-        required: false,
-      },
-    ],
-    messages: (params: any) => [
-      {
-        role: 'user' as const,
-        content: {
-          type: 'text' as const,
-          text: `Explain how this ${params.arguments?.language || 'Unknown'} code works:\n\n${params.arguments?.code}`,
-        },
-      },
-    ],
+      ];
+    },
   },
 };

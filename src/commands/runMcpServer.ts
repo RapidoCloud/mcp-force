@@ -22,8 +22,22 @@ async function run(isSSE: boolean, options: DiscoverToolsOptions): Promise<void>
   const args = process.argv.slice(2);
 
   if (isSSE) {
+    // Start SSE server for HTTP dependency viewer
+    console.error('Starting SSE server for HTTP dependency viewer...');
     sseServer(SERVER_NAME, SERVER_VERSION, options);
   } else {
+    // Check if we should also start SSE server alongside stdio
+    const shouldStartSSE = process.env.START_SSE_SERVER === 'true' || args.includes('--with-sse');
+
+    if (shouldStartSSE) {
+      console.error('Starting both STDIO and SSE servers...');
+      // Start SSE server in background for HTTP endpoints
+      sseServer(SERVER_NAME, SERVER_VERSION, options);
+      // Small delay to let SSE server start
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+
+    // Start stdio server (this will block)
     await stdioServer(SERVER_NAME, SERVER_VERSION, options);
   }
 }

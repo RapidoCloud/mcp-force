@@ -1,4 +1,5 @@
 const path = require('path');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 module.exports = {
   mode: 'production',
@@ -36,6 +37,16 @@ module.exports = {
     modules: ['node_modules', 'dist'],
   },
   plugins: [
+    // Copy resources directory to dist
+    new CopyWebpackPlugin({
+      patterns: [
+        {
+          from: 'src/server/resources',
+          to: 'server/resources',
+          noErrorOnMissing: false,
+        },
+      ],
+    }),
     // Add shebang to the mcpServer output and make it executable
     {
       apply: (compiler) => {

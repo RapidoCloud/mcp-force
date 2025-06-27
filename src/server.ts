@@ -26,9 +26,9 @@ program
 // "Run server" command
 program
   .command('run-server')
-  .description('Run the MCP server')
-  .option('--stdio', 'stdio mode MCP server (default)')
+  .description('Run the MCP server (stdio mode by default)')
   .option('--sse', 'SSE mode MCP server')
+  .option('--stdio', 'stdio mode MCP server (default)')
   .option('--selectedAPIs <apis>', 'Comma-separated list of selected APIs to include')
   .option('--selectedapis <apis>', 'Comma-separated list of selected APIs to include (alias)')
   .option('--barredAPIs <apis>', 'Comma-separated list of APIs to exclude')
@@ -40,6 +40,7 @@ program
 
     const { isStdio, discoverToolsOptions } = processCommandOptions(options);
 
+    // Default to stdio mode unless SSE is explicitly requested
     runMcpServer(!isStdio, discoverToolsOptions);
   });
 program.parse(process.argv);

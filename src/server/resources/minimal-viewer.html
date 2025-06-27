@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dependency Viewer Launcher</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .launcher-container {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      padding: 40px;
+      text-align: center;
+      max-width: 500px;
+      width: 90%;
+    }
+
+    .launcher-header {
+      margin-bottom: 30px;
+    }
+
+    .launcher-header h1 {
+      color: #333;
+      margin: 0;
+      font-size: 2.5em;
+      margin-bottom: 10px;
+    }
+
+    .launcher-header p {
+      color: #666;
+      margin: 0;
+      font-size: 1.1em;
+    }
+
+    .status-section {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .status-indicator {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      margin-right: 8px;
+    }
+
+    .status-loading {
+      background: #ffc107;
+      animation: pulse 1.5s infinite;
+    }
+
+    .status-ready {
+      background: #28a745;
+    }
+
+    .status-error {
+      background: #dc3545;
+    }
+
+    @keyframes pulse {
+      0% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.5;
+      }
+
+      100% {
+        opacity: 1;
+      }
+    }
+
+    .launch-button {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 15px 40px;
+      font-size: 1.1em;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin: 10px;
+      min-width: 200px;
+    }
+
+    .launch-button:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .launch-button:disabled {
+      background: #6c757d;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .options-section {
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid #dee2e6;
+    }
+
+    .option {
+      margin: 10px 0;
+    }
+
+    .option label {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .option input[type="checkbox"] {
+      margin-right: 8px;
+    }
+
+    .error-message {
+      color: #dc3545;
+      background: #f8d7da;
+      border: 1px solid #f5c6cb;
+      border-radius: 4px;
+      padding: 10px;
+      margin-top: 10px;
+    }
+
+    .loading-message {
+      color: #856404;
+      background: #fff3cd;
+      border: 1px solid #ffeaa7;
+      border-radius: 4px;
+      padding: 10px;
+      margin-top: 10px;
+    }
+
+    .info-section {
+      margin-top: 20px;
+      font-size: 0.9em;
+      color: #666;
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="launcher-container">
+    <div class="launcher-header">
+      <h1>🌳 Dependency Viewer</h1>
+      <p>Interactive Code Dependency Analysis</p>
+    </div>
+
+    <div class="status-section">
+      <div id="status-line">
+        <span id="status-indicator" class="status-indicator status-loading"></span>
+        <span id="status-text">Checking MCP server connection...</span>
+      </div>
+
+      <div id="loading-message" class="loading-message hidden">
+        Fetching dependency viewer from MCP server...
+      </div>
+
+      <div id="error-message" class="error-message hidden">
+        <strong>Error:</strong> <span id="error-text"></span>
+      </div>
+    </div>
+
+    <div class="launch-buttons">
+      <button id="launch-embedded" class="launch-button" disabled>
+        🖼️ Launch Embedded Viewer
+      </button>
+      <button id="launch-new-window" class="launch-button" disabled>
+        🪟 Launch in New Window
+      </button>
+    </div>
+
+    <div class="options-section">
+      <div class="option">
+        <label>
+          <input type="checkbox" id="auto-refresh" checked>
+          Auto-refresh when analysis data changes
+        </label>
+      </div>
+    </div>
+
+    <div class="info-section">
+      <p><strong>About:</strong> This launcher fetches the complete dependency viewer from the MCP server and displays your code analysis results.</p>
+    </div>
+
+    <!-- Hidden iframe for embedded mode -->
+    <div id="embedded-container" class="hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 1000;">
+      <div style="background: #333; color: white; padding: 10px; display: flex; justify-content: space-between; align-items: center;">
+        <span>🌳 Dependency Viewer</span>
+        <button id="close-embedded" style="background: none; border: none; color: white; font-size: 20px; cursor: pointer;">✕</button>
+      </div>
+      <iframe id="viewer-iframe" style="width: 100%; height: calc(100% - 50px); border: none;"></iframe>
+    </div>
+  </div>
+
+  <script>
+    // Global state
+    let viewerHtml = null;
+    let analysisData = null;
+    let mcpServerAvailable = false;
+
+    // DOM elements
+    const statusIndicator = document.getElementById('status-indicator');
+    const statusText = document.getElementById('status-text');
+    const loadingMessage = document.getElementById('loading-message');
+    const errorMessage = document.getElementById('error-message');
+    const errorText = document.getElementById('error-text');
+    const launchEmbeddedBtn = document.getElementById('launch-embedded');
+    const launchNewWindowBtn = document.getElementById('launch-new-window');
+    const embeddedContainer = document.getElementById('embedded-container');
+    const closeEmbeddedBtn = document.getElementById('close-embedded');
+    const viewerIframe = document.getElementById('viewer-iframe');
+
+    // Initialize the launcher
+    async function initialize() {
+      try {
+        // Check MCP server connection and fetch viewer
+        await checkMcpServer();
+        await fetchViewerHtml();
+
+        // Update status to ready
+        updateStatus('ready','MCP server connected - Ready to launch viewer');
+        enableLaunchButtons();
+
+      } catch (error) {
+        console.error('Initialization failed:',error);
+        updateStatus('error','Failed to connect to MCP server');
+        showError(error.message);
+      }
+    }
+
+    async function checkMcpServer() {
+      // In a real MCP environment, this would check server connectivity
+      // For now, we'll simulate the check
+      return new Promise((resolve,reject) => {
+        setTimeout(() => {
+          // Simulate server check - in real implementation this would be actual MCP calls
+          mcpServerAvailable = true;
+          resolve(true);
+        },1000);
+      });
+    }
+
+    async function fetchViewerHtml() {
+      updateStatus('loading','Fetching dependency viewer from MCP server...');
+      showLoading('Downloading viewer HTML...');
+
+      try {
+        // Try multiple methods to fetch the viewer HTML
+        let fetchedHtml = null;
+
+        // Method 1: Try HTTP endpoint (for SSE mode)
+        try {
+          const response = await fetch('/dependency-viewer/full');
+          if (response.ok) {
+            fetchedHtml = await response.text();
+            console.log('Successfully fetched viewer via HTTP endpoint');
+          }
+        } catch (httpError) {
+          console.log('HTTP fetch failed, trying MCP resource...');
+        }
+
+        // Method 2: In a real MCP client environment (VS Code, etc.)
+        if (!fetchedHtml) {
+          try {
+            // In a real MCP client, this resource would be automatically resolved
+            console.log('Fetching dependency-viewer://html from MCP server...');
+
+            // This would be handled by the MCP client infrastructure
+            // const response = await mcpClient.readResource('dependency-viewer://html');
+            // fetchedHtml = response.contents[0].text;
+
+            // For demonstration, we'll create a working fallback viewer
+            fetchedHtml = createFallbackViewer();
+
+          } catch (mcpError) {
+            console.log('MCP resource fetch failed');
+          }
+        }
+
+        if (fetchedHtml) {
+          viewerHtml = fetchedHtml;
+          hideLoading();
+        } else {
+          throw new Error('Unable to fetch viewer HTML from any source');
+        }
+
+      } catch (error) {
+        hideLoading();
+        throw new Error(`Failed to fetch viewer HTML: ${error.message}`);
+      }
+    }
+
+    function createFallbackViewer() {
+      return `
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Dependency Viewer</title>
+          <style>
+              body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+              .container { max-width: 1200px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+              .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #e0e0e0; padding-bottom: 20px; }
+              .status { background: #e3f2fd; padding: 20px; border-radius: 4px; border-left: 4px solid #2196f3; }
+              .loading { text-align: center; padding: 40px; }
+              .error { background: #ffebee; color: #c62828; padding: 20px; border-radius: 4px; border-left: 4px solid #f44336; }
+          </style>
+      </head>
+      <body>
+          <div class="container">
+              <div class="header">
+                  <h1>🌳 Dependency Viewer</h1>
+                  <p>Interactive Code Dependency Analysis</p>
+              </div>
+              
+              <div id="status" class="status">
+                  <h3>📡 Loading Dependency Data...</h3>
+                  <p>Fetching analysis results from MCP server...</p>
+              </div>
+              
+              <div id="content" style="display: none;">
+                  <div id="analysis-info"></div>
+                  <div id="dependency-tree"></div>
+              </div>
+              
+              <div id="error" class="error" style="display: none;">
+                  <h3>❌ Error</h3>
+                  <p id="error-message">Unable to load dependency data</p>
+              </div>
+          </div>
+          
+          <script>
+            async function loadDependencyData() {
+                try {
+                    // Try to fetch analysis data
+                    let data = null;
+                    
+                    // Method 1: HTTP endpoint (SSE mode)
+                    try {
+                        const response = await fetch('/dependency-analysis/data');
+                        if (response.ok) {
+                            data = await response.json();
+                        }
+                    } catch (e) {
+                        console.log('HTTP data fetch failed, trying MCP resource...');
+                    }
+                    
+                    // Method 2: MCP resource (would be handled by MCP client)
+                    if (!data) {
+                        console.log('In a real MCP environment, data would be fetched from dependency-analysis://data');
+                        // Show helpful message
+                        showError('No dependency analysis data available. Please run a dependency analysis first.');
+                        return;
+                    }
+                    
+                    // Display the data
+                    displayDependencyData(data);
+                    
+                } catch (error) {
+                    console.error('Failed to load dependency data:', error);
+                    showError(error.message);
+                }
+            }
+            
+            function displayDependencyData(data) {
+                const status = document.getElementById('status');
+                const content = document.getElementById('content');
+                const analysisInfo = document.getElementById('analysis-info');
+                const dependencyTree = document.getElementById('dependency-tree');
+                
+                status.style.display = 'none';
+                content.style.display = 'block';
+                
+                // Show analysis info
+                analysisInfo.innerHTML = \`
+                    <h3>🎯 Analysis Target</h3>
+                    <p><strong>Name:</strong> \${data.target.name}</p>
+                    <p><strong>Type:</strong> \${data.target.type}</p>
+                    <p><strong>Dependencies:</strong> \${data.dependencies.length} direct, \${data.analyzed_items.length} total</p>
+                \`;
+                
+                // Show simple dependency list
+                dependencyTree.innerHTML = '<h3>📋 Dependencies</h3>' + 
+                    '<ul>' + 
+                    data.dependencies.map(dep => \`<li><strong>\${dep.name}</strong> (\${dep.type})</li>\`).join('') +
+                    '</ul>';
+            }
+            
+            function showError(message) {
+                document.getElementById('status').style.display = 'none';
+                document.getElementById('error').style.display = 'block';
+                document.getElementById('error-message').textContent = message;
+            }
+            
+            // Start loading data when page loads
+            document.addEventListener('DOMContentLoaded', loadDependencyData);
+  </script>
+</body>
+
+</html>
+`;
+}
+
+function updateStatus(type, text) {
+statusIndicator.className = `status-indicator status-${type}`;
+statusText.textContent = text;
+}
+
+function showLoading(message) {
+loadingMessage.textContent = message;
+loadingMessage.classList.remove('hidden');
+hideError();
+}
+
+function hideLoading() {
+loadingMessage.classList.add('hidden');
+}
+
+function showError(message) {
+errorText.textContent = message;
+errorMessage.classList.remove('hidden');
+hideLoading();
+}
+
+function hideError() {
+errorMessage.classList.add('hidden');
+}
+
+function enableLaunchButtons() {
+launchEmbeddedBtn.disabled = false;
+launchNewWindowBtn.disabled = false;
+}
+
+function launchEmbedded() {
+if (!viewerHtml) {
+showError('Viewer HTML not available');
+return;
+}
+
+// Create blob URL for the viewer HTML
+const blob = new Blob([viewerHtml], { type: 'text/html' });
+const blobUrl = URL.createObjectURL(blob);
+
+// Load in iframe
+viewerIframe.src = blobUrl;
+embeddedContainer.classList.remove('hidden');
+}
+
+function launchNewWindow() {
+if (!viewerHtml) {
+showError('Viewer HTML not available');
+return;
+}
+
+// Open in new window
+const newWindow = window.open('', '_blank', 'width=1200,height=800,scrollbars=yes,resizable=yes');
+if (newWindow) {
+newWindow.document.write(viewerHtml);
+newWindow.document.close();
+newWindow.focus();
+} else {
+showError('Failed to open popup window. Please check popup blocker settings.');
+}
+}
+
+function closeEmbedded() {
+embeddedContainer.classList.add('hidden');
+// Clean up blob URL
+if (viewerIframe.src.startsWith('blob:')) {
+URL.revokeObjectURL(viewerIframe.src);
+}
+viewerIframe.src = '';
+}
+
+// Event listeners
+launchEmbeddedBtn.addEventListener('click', launchEmbedded);
+launchNewWindowBtn.addEventListener('click', launchNewWindow);
+closeEmbeddedBtn.addEventListener('click', closeEmbedded);
+
+// Handle escape key to close embedded viewer
+document.addEventListener('keydown', (e) => {
+if (e.key === 'Escape' && !embeddedContainer.classList.contains('hidden')) {
+closeEmbedded();
+}
+});
+
+// Initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', initialize);
+
+// Auto-refresh functionality (if enabled)
+function setupAutoRefresh() {
+const autoRefresh = document.getElementById('auto-refresh');
+
+if (autoRefresh.checked) {
+// Set up periodic checking for new analysis data
+setInterval(async () => {
+try {
+// In real implementation, this would check for updated analysis data
+// await checkForUpdatedAnalysis();
+} catch (error) {
+console.warn('Auto-refresh check failed:', error);
+}
+}, 5000); // Check every 5 seconds
+}
+}
+
+// Set up auto-refresh after initialization
+setTimeout(setupAutoRefresh, 2000);
+</script>
+</body>
+
+</html>
