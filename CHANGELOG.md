@@ -1,3 +1,31 @@
+# [1.0.0-dev.8](https://github.com/RapidoCloud/mcp-force/compare/v1.0.0-dev.7...v1.0.0-dev.8) (2025-06-27)
+
+
+### Features
+
+* prompts, resources, API selection ([aea6871](https://github.com/RapidoCloud/mcp-force/commit/aea6871fae6b60a281bcd0f2ba08c71e04664f61))
+
+# [1.0.0-dev.7](https://github.com/RapidoCloud/mcp-force/compare/v1.0.0-dev.6...v1.0.0-dev.7) (2025-06-26)
+
+
+### Bug Fixes
+
+* updated mcp.json command ([c775c38](https://github.com/RapidoCloud/mcp-force/commit/c775c3858ab60ff5a271dbe4079eddf05d923790))
+
+# [1.0.0-dev.6](https://github.com/RapidoCloud/mcp-force/compare/v1.0.0-dev.5...v1.0.0-dev.6) (2025-06-26)
+
+
+### Bug Fixes
+
+* updated mcp.json command ([a8bd76d](https://github.com/RapidoCloud/mcp-force/commit/a8bd76d9fc10338a3fde8432958fc702d2931c05))
+
+# [1.0.0-dev.5](https://github.com/RapidoCloud/mcp-force/compare/v1.0.0-dev.4...v1.0.0-dev.5) (2025-06-26)
+
+
+### Features
+
+* command options to select APIs ([331515a](https://github.com/RapidoCloud/mcp-force/commit/331515ab33682a59576e38c559bb0b6cedb542e2))
+
 # [1.0.0-dev.4](https://github.com/RapidoCloud/mcp-force/compare/v1.0.0-dev.3...v1.0.0-dev.4) (2025-06-25)
 
 
@@ -6,11 +34,15 @@
 * added REST APIs for Search, Logs, Actions, OpenAPISchema ([46d4a35](https://github.com/RapidoCloud/mcp-force/commit/46d4a359e64b661a80e08f48b1f046020ebe2917))
 
 # [1.0.0-dev.3](https://github.com/RapidoCloud/mcp-force/compare/v1.0.0-dev.2...v1.0.0-dev.3) (2025-06-25)
-
-
-### Features
-
-* using peerDependencies for mcp-tools ([5964783](https://github.com/RapidoCloud/mcp-force/commit/5964783d43a11d69e9953ff16c18c53f444e7554))
+* published @rapidocloud/mcp-force ([883bc24](https://github.com/RapidoCloud/mcp-force/commit/883bc245b7bbcb30aa61af77e533e9c48e12717c))
+* publishing releases to NPMjs.org ([981806d](https://github.com/RapidoCloud/mcp-force/commit/981806d6a2601c396079b73af0845a86502c2853))
+* publishing releases to NPMjs.org ([23829bc](https://github.com/RapidoCloud/mcp-force/commit/23829bc4fae4ec694e709f09064b7d65db1713eb))
+* publishing releases to NPMjs.org ([01f4681](https://github.com/RapidoCloud/mcp-force/commit/01f4681d37f55a97ed80a1ad2db8598f567a8ce9))
+* publishing releases to NPMjs.org ([5db3467](https://github.com/RapidoCloud/mcp-force/commit/5db3467c9558f39401ea55b3c1df142bfb329185))
+* publishing releases to NPMjs.org ([a57d831](https://github.com/RapidoCloud/mcp-force/commit/a57d831d1ed82a42d0df2b077da1bbdbc28fc58c))
+* tests OK with @rapidocloud/mcp-tools ([2eabee0](https://github.com/RapidoCloud/mcp-force/commit/2eabee0f12b14e003ed103d989c1942d3e76cf11))
+* @rapidocloud/mcp-force published to NPMjs.org ([b196ea7](https://github.com/RapidoCloud/mcp-force/commit/b196ea72be3a459d803576549403b4aacaeb58e8))
+* use MCP server without pre-installation ([147a8ff](https://github.com/RapidoCloud/mcp-force/commit/147a8ffe95777b3339715d9503ad00384851de31))
 
 # [1.0.0-dev.2](https://github.com/RapidoCloud/mcp-force/compare/v1.0.0-dev.1...v1.0.0-dev.2) (2025-06-25)
 
