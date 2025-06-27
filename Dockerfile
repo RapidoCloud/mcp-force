@@ -6,4 +6,4 @@ RUN npm install
 
 COPY . .
 
-ENTRYPOINT ["node", "dist/server.js", "run-server", "--stdio", "--barredAPIs", "GraphQL"]
+ENTRYPOINT ["node", "dist/server.js", "run-server", "--barredAPIs", "GraphQL"]

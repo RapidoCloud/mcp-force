@@ -1,18 +1,23 @@
 {
   "servers": {
-    "mcpforce": {
+    "mcpforce-vscode": {
       "command": "bash",
-      "args": ["-c", "npm install -g @rapidocloud/mcp-tools@1.0.0-dev.9 1>&2 && npx @rapidocloud/mcp-force@1.0.0-dev.5 run-server --stdio --selectedAPIs 'rest, tooling, metadata' --barredAPIs 'auth, bulk, graphql'"],
+      "args": ["-c", "node dist/server.js run-server --stdio --selectedAPIs 'rest, tooling, metadata' --barredAPIs 'auth, bulk, graphql'"],
       "env": {
+        "START_SSE_SERVER": "true",
         "SALESFORCE_ENDPOINT": "https://rbarrow-dev-ed.my.salesforce.com",
-        "SALESFORCE_ACCESS_TOKEN": "00D1i000000ULGK!ARMAQASwYw80Xu_YRiPEbYL.LM8ba_AVTBBBROmUzz.2DKsqS6lFhpeBH4LKbBnG7yIjLJTu7oIhEhfigdV5_EKFRD9lH53U",
-        "PORT": "3021"
+        "SALESFORCE_ACCESS_TOKEN": "00D1i000000ULGK!ARMAQGkdLQzbQ7teWgybEIiHaPhgqt9jfViEvyjQEj7vNhdP70GT2qkP8zZ93pdLBFTbVrrI2LqA66Ql290U5QeDDdEfmizN"
       }
     },
 
     "sf-cli-codefriar": {
       "command": "npx",
       "args": ["-y", "/Users/rupert/Documents/Workspaces/WS_playground/sf-cli-mcp-codefriar/sf-mcp/build/index.js"]
+    },
+
+    "github": {
+      "type": "http",
+      "url": "https://api.githubcopilot.com/mcp/"
     }
   }
 }

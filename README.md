@@ -89,7 +89,7 @@ npx @rapidocloud/mcp-force run-server --barredToolNames 'run_tests_sync, tooling
 #### Run the MCP server with a specific version of MCP Tools, selected APIs and barred APIs
 
 ```bash
-npm install -g @rapidocloud/mcptools@1.0.0-dev.9 1>&2 && npx @rapidocloud/mcp-force@1.0.0-dev.5 run-server --stdio --selectedAPIs 'rest, tooling, metadata' --barredAPIs 'auth, bulk, graphql'
+npm install -g @rapidocloud/mcptools@1.0.0-dev.9 1>&2 && npx @rapidocloud/mcp-force@1.0.0-dev.5 run-server --selectedAPIs 'rest, tooling, metadata' --barredAPIs 'auth, bulk, graphql'
 ```
 
 To use this in your MCP server configuration :
@@ -99,7 +99,7 @@ To use this in your MCP server configuration :
   "servers": {
     "mcpforce": {
       "command": "bash",
-      "args": ["-c", "npm install -g @rapidocloud/mcp-tools@1.0.0-dev.9 1>&2 && npx @rapidocloud/mcp-force@1.0.0-dev.5 run-server --stdio --selectedAPIs 'rest, tooling, metadata' --barredAPIs 'auth, bulk, graphql'"],
+      "args": ["-c", "npm install -g @rapidocloud/mcp-tools@1.0.0-dev.9 1>&2 && npx @rapidocloud/mcp-force@1.0.0-dev.5 run-server --selectedAPIs 'rest, tooling, metadata' --barredAPIs 'auth, bulk, graphql'"],
       "env": {
         "SALESFORCE_ENDPOINT": "https://mydomain-dev-ed.developer.my.salesforce.com",
         "SALESFORCE_ACCESS_TOKEN": "<your_access_token_here>",
