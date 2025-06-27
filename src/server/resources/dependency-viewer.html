@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dependency Viewer</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+      border-bottom: 2px solid #e0e0e0;
+      padding-bottom: 20px;
+    }
+
+    .header h1 {
+      color: #333;
+      margin: 0;
+      font-size: 2.5em;
+    }
+
+    .header p {
+      color: #666;
+      margin: 10px 0 0 0;
+      font-size: 1.1em;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      font-size: 1.2em;
+      color: #666;
+    }
+
+    .error {
+      background-color: #ffebee;
+      border: 1px solid #f44336;
+      color: #c62828;
+      padding: 20px;
+      border-radius: 4px;
+      margin: 20px 0;
+    }
+
+    .controls {
+      margin-bottom: 20px;
+      padding: 15px;
+      background-color: #f8f9fa;
+      border-radius: 5px;
+      border: 1px solid #dee2e6;
+    }
+
+    .controls h3 {
+      margin-top: 0;
+      color: #495057;
+    }
+
+    .controls button {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-right: 10px;
+      margin-bottom: 5px;
+    }
+
+    .controls button:hover {
+      background-color: #0056b3;
+    }
+
+    .controls button.active {
+      background-color: #28a745;
+    }
+
+    .tab-container {
+      border: 1px solid #dee2e6;
+      border-radius: 5px;
+      overflow: hidden;
+    }
+
+    .tab-buttons {
+      display: flex;
+      background-color: #f8f9fa;
+      border-bottom: 1px solid #dee2e6;
+    }
+
+    .tab-button {
+      flex: 1;
+      padding: 12px 20px;
+      background-color: #f8f9fa;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+      border-right: 1px solid #dee2e6;
+    }
+
+    .tab-button:last-child {
+      border-right: none;
+    }
+
+    .tab-button.active {
+      background-color: #007bff;
+      color: white;
+    }
+
+    .tab-button:hover:not(.active) {
+      background-color: #e9ecef;
+    }
+
+    .tab-content {
+      padding: 20px;
+      min-height: 400px;
+    }
+
+    .tab-pane {
+      display: none;
+    }
+
+    .tab-pane.active {
+      display: block;
+    }
+
+    #tree-container {
+      width: 100%;
+      height: 800px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    #tree-svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    .table-container {
+      max-height: 600px;
+      overflow-y: auto;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0;
+    }
+
+    th,
+    td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+
+    th {
+      background-color: #f8f9fa;
+      font-weight: bold;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    tbody tr:hover {
+      background-color: #f8f9fa;
+    }
+
+    .level-badge {
+      background-color: #007bff;
+      color: white;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: bold;
+    }
+
+    .type-badge {
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+
+    .type-class {
+      background-color: #e3f2fd;
+      color: #1976d2;
+    }
+
+    .type-sobject {
+      background-color: #f3e5f5;
+      color: #7b1fa2;
+    }
+
+    .type-method {
+      background-color: #e8f5e8;
+      color: #388e3c;
+    }
+
+    .type-interface {
+      background-color: #fff3e0;
+      color: #f57c00;
+    }
+
+    .type-enum {
+      background-color: #fce4ec;
+      color: #c2185b;
+    }
+
+    .type-other {
+      background-color: #f5f5f5;
+      color: #616161;
+    }
+
+    /* D3 Tree Styles */
+    .node circle {
+      fill: #007bff;
+      stroke: #004085;
+      stroke-width: 2px;
+      cursor: pointer;
+    }
+
+    .node circle:hover {
+      fill: #0056b3;
+    }
+
+    .node.type-sobject circle {
+      fill: #7b1fa2;
+      stroke: #4a148c;
+    }
+
+    .node.type-method circle {
+      fill: #388e3c;
+      stroke: #1b5e20;
+    }
+
+    .node.type-interface circle {
+      fill: #f57c00;
+      stroke: #e65100;
+    }
+
+    .node text {
+      font-family: Arial, sans-serif;
+      font-size: 12px;
+      fill: #333;
+      pointer-events: none;
+    }
+
+    .link {
+      fill: none;
+      stroke: #ccc;
+      stroke-width: 2px;
+    }
+
+    .link.circular {
+      stroke: #ff4444;
+      stroke-dasharray: 5, 5;
+    }
+
+    .tooltip {
+      position: absolute;
+      background-color: rgba(0, 0, 0, 0.8);
+      color: white;
+      padding: 10px;
+      border-radius: 4px;
+      font-size: 12px;
+      pointer-events: none;
+      z-index: 1000;
+      max-width: 300px;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .stat-card {
+      background-color: #f8f9fa;
+      padding: 20px;
+      border-radius: 8px;
+      border: 1px solid #dee2e6;
+      text-align: center;
+    }
+
+    .stat-number {
+      font-size: 2em;
+      font-weight: bold;
+      color: #007bff;
+      margin: 0;
+    }
+
+    .stat-label {
+      color: #666;
+      margin: 5px 0 0 0;
+      font-size: 0.9em;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🌳 Dependency Viewer</h1>
+      <p>Interactive visualization of code dependencies</p>
+    </div>
+
+    <div id="loading" class="loading">
+      📡 Loading dependency data from MCP server...
+    </div>
+
+    <div id="error" class="error" style="display: none;">
+      <strong>Error:</strong> <span id="error-message"></span>
+    </div>
+
+    <div id="main-content" style="display: none;">
+      <div class="controls">
+        <h3>🎛️ Controls</h3>
+        <button id="expand-all">Expand All</button>
+        <button id="collapse-all">Collapse All</button>
+        <button id="reset-zoom">Reset Zoom</button>
+        <button id="center-tree">Center Tree</button>
+      </div>
+
+      <div class="tab-container">
+        <div class="tab-buttons">
+          <button class="tab-button active" data-tab="overview">📊 Overview</button>
+          <button class="tab-button" data-tab="tree">🌳 Tree View</button>
+          <button class="tab-button" data-tab="table">📋 Table View</button>
+          <button class="tab-button" data-tab="data">💾 Raw Data</button>
+        </div>
+
+        <div class="tab-content">
+          <div id="overview-tab" class="tab-pane active">
+            <div id="stats-container"></div>
+            <div id="target-info"></div>
+          </div>
+
+          <div id="tree-tab" class="tab-pane">
+            <div id="tree-container">
+              <svg id="tree-svg"></svg>
+            </div>
+          </div>
+
+          <div id="table-tab" class="tab-pane">
+            <div class="table-container">
+              <table id="dependencies-table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Type</th>
+                    <th>Level</th>
+                    <th>Relationship</th>
+                    <th>Source</th>
+                  </tr>
+                </thead>
+                <tbody id="dependencies-tbody">
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div id="data-tab" class="tab-pane">
+            <pre id="raw-data" style="background-color: #f8f9fa; padding: 20px; border-radius: 4px; overflow: auto; max-height: 600px;"></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Global variables
+    let dependencyData = null;
+    let treeData = null;
+    let svg,g,tree,root;
+    let width = 800,height = 600;
+
+    // Initialize the viewer
+    async function initializeViewer() {
+      try {
+        // Fetch dependency data from MCP server
+        dependencyData = await fetchDependencyData();
+
+        if (!dependencyData) {
+          throw new Error('No dependency data available');
+        }
+
+        // Hide loading, show content
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('main-content').style.display = 'block';
+
+        // Initialize all views
+        initializeOverview();
+        initializeTree();
+        initializeTable();
+        initializeRawData();
+        initializeTabs();
+        initializeControls();
+
+      } catch (error) {
+        console.error('Failed to initialize viewer:',error);
+        showError(error.message);
+      }
+    }
+
+    // Fetch dependency data from MCP server
+    async function fetchDependencyData() {
+      try {
+        // Method 1: Try HTTP endpoint (SSE mode)
+        try {
+          const response = await fetch('/dependency-analysis/data');
+          console.error('### fetch /dependency-analysis/data RESPONSE',response);
+
+          if (response.ok) {
+            const data = await response.json();
+            console.error('Successfully fetched data via HTTP endpoint');
+            return data;
+          }
+        } catch (httpError) {
+          console.error('HTTP data fetch failed, trying MCP resource...');
+        }
+
+        // Method 2: In a real MCP client environment (VS Code, etc.)
+        // This would be handled by the MCP client infrastructure
+        console.error('Attempting to fetch dependency-analysis://data from MCP server');
+
+        // In VS Code or proper MCP client, this would be:
+        // const response = await mcpClient.readResource('dependency-analysis://data');
+        // return JSON.parse(response.contents[0].text);
+
+        // For now, return null to indicate no data
+        return null;
+
+      } catch (error) {
+        console.error('Failed to fetch dependency data:',error);
+        throw new Error('Unable to fetch dependency data from MCP server. Please ensure analysis has been run.');
+      }
+    }
+
+    function showError(message) {
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('error').style.display = 'block';
+      document.getElementById('error-message').textContent = message;
+    }
+
+    function initializeOverview() {
+      if (!dependencyData) return;
+
+      const statsContainer = document.getElementById('stats-container');
+      const targetInfo = document.getElementById('target-info');
+
+      // Create stats grid
+      const stats = [
+        { label: 'Total Dependencies',value: dependencyData.analyzed_items?.length || 0 },
+        { label: 'Dependency Levels',value: dependencyData.total_levels || 0 },
+        { label: 'Direct Dependencies',value: dependencyData.dependencies?.length || 0 },
+        { label: 'Circular Dependencies',value: dependencyData.circular_dependencies?.length || 0 }
+      ];
+
+      statsContainer.innerHTML = '<div class="stats-grid">' +
+        stats.map(stat => `
+                    <div class="stat-card">
+                        <div class="stat-number">${stat.value}</div>
+                        <div class="stat-label">${stat.label}</div>
+                    </div>
+                `).join('') +
+        '</div>';
+
+      // Target information
+      const target = dependencyData.target;
+      targetInfo.innerHTML = `
+                <h3>🎯 Analysis Target</h3>
+                <p><strong>Name:</strong> ${target.name}</p>
+                <p><strong>Type:</strong> ${target.type}</p>
+                <p><strong>Source:</strong> ${target.source}</p>
+                <p><strong>Analysis Date:</strong> ${dependencyData.metadata?.timestamp || 'Unknown'}</p>
+            `;
+    }
+
+    function initializeTree() {
+      // Tree initialization code would go here
+      // This is a simplified version
+      console.log('Tree view initialized');
+    }
+
+    function initializeTable() {
+      if (!dependencyData) return;
+
+      const tbody = document.getElementById('dependencies-tbody');
+      const allDeps = [];
+
+      function collectDependencies(deps,level = 1) {
+        if (!deps) return;
+        deps.forEach(dep => {
+          allDeps.push({ ...dep,level });
+          if (dep.children && dep.children.length > 0) {
+            collectDependencies(dep.children,level + 1);
+          }
+        });
+      }
+
+      collectDependencies(dependencyData.dependencies);
+
+      tbody.innerHTML = allDeps.map(dep => `
+                <tr>
+                    <td>${dep.name}</td>
+                    <td><span class="type-badge type-${dep.type}">${dep.type}</span></td>
+                    <td><span class="level-badge">${dep.level}</span></td>
+                    <td>${dep.relationship}</td>
+                    <td>${dep.source}</td>
+                </tr>
+            `).join('');
+    }
+
+    function initializeRawData() {
+      if (!dependencyData) return;
+
+      document.getElementById('raw-data').textContent = JSON.stringify(dependencyData,null,2);
+    }
+
+    function initializeTabs() {
+      const tabButtons = document.querySelectorAll('.tab-button');
+      const tabPanes = document.querySelectorAll('.tab-pane');
+
+      tabButtons.forEach(button => {
+        button.addEventListener('click',() => {
+          const targetTab = button.dataset.tab;
+
+          // Update buttons
+          tabButtons.forEach(btn => btn.classList.remove('active'));
+          button.classList.add('active');
+
+          // Update panes
+          tabPanes.forEach(pane => pane.classList.remove('active'));
+          document.getElementById(targetTab + '-tab').classList.add('active');
+        });
+      });
+    }
+
+    function initializeControls() {
+      // Control initialization code would go here
+      console.log('Controls initialized');
+    }
+
+    // Start the application
+    document.addEventListener('DOMContentLoaded',initializeViewer);
+  </script>
+</body>
+
+</html>
