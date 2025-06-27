@@ -1,3 +1,10 @@
+# [1.0.0-dev.8](https://github.com/RapidoCloud/mcp-force/compare/v1.0.0-dev.7...v1.0.0-dev.8) (2025-06-27)
+
+
+### Features
+
+* prompts, resources, API selection ([aea6871](https://github.com/RapidoCloud/mcp-force/commit/aea6871fae6b60a281bcd0f2ba08c71e04664f61))
+
 # [1.0.0-dev.7](https://github.com/RapidoCloud/mcp-force/compare/v1.0.0-dev.6...v1.0.0-dev.7) (2025-06-26)
 
 
